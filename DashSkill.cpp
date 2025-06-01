@@ -1,11 +1,15 @@
-// DashSkill.cpp
 #include "DashSkill.h"
+#include "Player.h"
 
 void DashSkill::activate(Player* player) {
-    SDL_FRect pos = player->gedDest();
-    if (player->isFlipped()) // налево
-        pos.x -= dashDistance;
-    else
-        pos.x += dashDistance;
-    player->setPosition(pos.x, pos.y);
+    // Пример реализации
+    // если у тебя есть такой метод
+}
+
+void DashSkill::update(Player* player) {
+    // Обновление логики рывка
+}
+
+void DashSkill::render(SDL_Renderer* renderer, Camera* camera) {
+    // Ничего не отрисовывает — можно оставить пустым
 }

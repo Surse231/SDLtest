@@ -5,6 +5,8 @@
 #include <SDL3/SDL.h>
 #include <SDL3/SDL_keyboard.h>
 #include "DashSkill.h"
+#include "FireballSkill.h"
+
 
 
 Player::Player(SDL_Renderer* renderer, TTF_Font* font, Camera* camera)
@@ -28,6 +30,17 @@ Player::Player(SDL_Renderer* renderer, TTF_Font* font, Camera* camera)
         skillHUD->addSkillIcon(dashIconTexture, "Dash");
         skills.push_back(new DashSkill());
     }
+
+    SDL_Texture* fireIcon = IMG_LoadTexture(renderer, "assets/icons/fireball.png");
+    if (fireIcon) {
+        skillHUD->addSkillIcon(fireIcon, "Fireball");
+        skills.push_back(new FireballSkill());
+
+
+
+    }
+
+
 }
 
 Player::~Player() {
@@ -84,6 +97,17 @@ void Player::otrisovka() {
 
     // отрисовка интерфейса с иконками скиллов
     skillHUD->render();
+
+    // убираем оба вызова
+  // вместо этого используем:
+    for (Skill* skill : skills)
+        skill->update(this);
+
+   
+    for (Skill* skill : skills) {
+        // Предполагается, что render принимает SDL_Renderer* и камеру
+        skill->render(renderer, camera);
+    }
 
 }
 
@@ -206,6 +230,17 @@ void Player::obnovleniepersa() {
     moveHandler(keys);
     attackHandler();
     interface->obnovlenieHUD();
+
+    Uint64 now = SDL_GetTicks();
+    static Uint64 lastTime = now;
+    Uint64 deltaTime = now - lastTime;
+    lastTime = now;
+
+    if (skills.size() > 1)
+        skills[1]->update(this);
+
+
+
 }
 
 void Player::obrabotkaklavish(SDL_Event* event) {
@@ -220,5 +255,11 @@ void Player::obrabotkaklavish(SDL_Event* event) {
     if (event->type == SDL_EVENT_KEY_DOWN && event->key.key == SDLK_Q) {
         dash();  // Просто вызов рывка
     }
+    if (event->type == SDL_EVENT_KEY_DOWN && event->key.key== SDLK_E) {
+        if (skills.size() > 1) {
+            skills[1]->activate(this);  // Fireball
+        }
+    }
+
 }
 

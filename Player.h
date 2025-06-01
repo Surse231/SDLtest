@@ -33,6 +33,7 @@ public:
 
     void dash();
 
+
 private:
     void defineLook(const bool* keys);
     void attackHandler();
@@ -68,7 +69,7 @@ private:
     bool isAttack = false;
     bool isjump = false;
     bool isRunning = false;
-
+        
     int velocityY = 0;
     static const int gravity = 1;
     static const int sila_prizhka = -15;

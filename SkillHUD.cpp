@@ -6,7 +6,11 @@ SkillHUD::SkillHUD(SDL_Renderer* renderer) : renderer(renderer) {}
 SkillHUD::~SkillHUD() {}
 
 void SkillHUD::addSkillIcon(SDL_Texture* tex, const std::string& name) {
-    SDL_FRect rect = { 20 + (float)icons.size() * 0, 20, 100, 100 };
+    const float iconWidth = 100.0f;
+    const float iconSpacing = 10.0f;
+
+    SDL_FRect rect = { 20 + (float)icons.size() * (iconWidth + iconSpacing), 20, iconWidth, 100 };
+
     icons.push_back({ tex, rect, name });
 }
 

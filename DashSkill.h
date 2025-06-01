@@ -1,13 +1,11 @@
-// DashSkill.h
 #pragma once
 #include "Skill.h"
-#include "Player.h"
-#include <SDL3/SDL.h>
-
+#include "Camera.h"
+    
 class DashSkill : public Skill {
 public:
     void activate(Player* player) override;
+    void update(Player* player) override;
+    void render(SDL_Renderer* renderer, Camera* camera) override;
 
-private:
-    const float dashDistance = 100.0f;
 };
