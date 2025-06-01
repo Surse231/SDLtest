@@ -1,0 +1,90 @@
+﻿#include "Game.h"
+#include "Player.h"
+#include <vector>
+#include <string>
+
+Game::Game()
+{
+
+}
+
+Game::~Game()
+{
+}
+SDL_AppResult Game::SDL_AppInit()
+{
+    SDL_Init(SDL_INIT_VIDEO);
+    TTF_Init();
+    SDL_CreateWindowAndRenderer("SDL3 Game", 1920, 1080, SDL_WINDOW_RESIZABLE, &window, &renderer);
+    SDL_SetWindowFullscreen(window, SDL_WINDOW_FULLSCREEN);
+    camera = new Camera(1920, 1080, 400, 200);  // СНАЧАЛА камера
+
+    font = TTF_OpenFont("assets/fonts/Orbitron-VariableFont_wght.ttf", 32);
+    camera = new Camera(1920, 1080, 400, 200);
+    player = new Player(renderer, font, camera);
+
+
+
+    return SDL_AppResult();
+}
+
+SDL_AppResult Game::SDL_AppEvent(SDL_Event* event)
+{
+    if (event->type == SDL_EVENT_QUIT) return SDL_APP_SUCCESS;
+
+    if (event->type == SDL_EVENT_KEY_DOWN && event->key.key == SDLK_ESCAPE)
+    {
+        if (showMenu) {
+            if (!menu->isInSettings())  // 👈 если НЕ в подменю настроек
+                showMenu = false;
+        }
+        else {
+            showMenu = true;
+        }
+    }
+
+    if (showMenu) {
+        bool resume = false;
+        menu->handleEvent(*event, resume, quit);
+        if (resume) showMenu = false;
+    }
+    else {
+        player->obrabotkaklavish(event);
+    }
+
+    return quit ? SDL_APP_SUCCESS : SDL_APP_CONTINUE;
+}
+
+SDL_AppResult Game::SDL_AppIterate()
+{
+    SDL_SetRenderDrawColor(renderer, 30, 30, 30, 255);
+    SDL_RenderClear(renderer);
+
+    if (showMenu) {
+
+        menu->render();
+    }
+    else {
+        camera->update(player->gedDest());
+
+        player->otrisovka();
+        player->obnovleniepersa();
+    }
+
+    SDL_RenderPresent(renderer);
+    SDL_Delay(16);
+    return quit ? SDL_APP_SUCCESS : SDL_APP_CONTINUE;
+}
+
+
+
+void Game::SDL_AppQuit(SDL_AppResult result) {
+    delete menu;
+    delete camera;
+
+    if (font) TTF_CloseFont(font);
+    SDL_DestroyRenderer(renderer);
+    SDL_DestroyWindow(window);
+    TTF_Quit();
+    SDL_Quit();
+}
