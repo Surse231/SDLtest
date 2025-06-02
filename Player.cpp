@@ -1,10 +1,9 @@
-﻿#include "Player.h"
-#include <SDL3_image/SDL_image.h>
+﻿#include <SDL3_image/SDL_image.h>
 #include <vector>
 #include <SDL3/SDL_events.h>
 #include <SDL3/SDL.h>
 #include <SDL3/SDL_keyboard.h>
-#include "DashSkill.h"
+#include "DashSkill.h"          
 #include "FireballSkill.h"
 
 
@@ -112,23 +111,23 @@ void Player::otrisovka() {
 }
 
 void Player::dash() {
-    Uint64 now = SDL_GetTicks();
+    //Uint64 now = SDL_GetTicks();
 
-    if (now - lastDashTime < dashCooldown) {
-        // Рывок в перезарядке — ничего не делаем
-        return;
-    }
+    //if (now - lastDashTime < dashCooldown) {
+    //    // Рывок в перезарядке — ничего не делаем
+    //    return;
+    //}
 
-    const float dashDistance = 100.0f;
+    //const float dashDistance = 100.0f;
 
-    if (isFlipped()) {
-        dest.x -= dashDistance;
-    }
-    else {
-        dest.x += dashDistance;
-    }
+    //if (isFlipped()) {
+    //    dest.x -= dashDistance;
+    //}
+    //else {
+    //    dest.x += dashDistance;
+    //}
 
-    lastDashTime = now;
+    //lastDashTime = now;
 }
 
 
@@ -243,6 +242,18 @@ void Player::obnovleniepersa() {
 
 }
 
+void Player::setSkillActive(bool active) {
+    isSkillActive = active;
+}
+
+void Player::setLastDashTime(Uint64 t) {
+    lastDashTime = t;
+}
+
+Uint64 Player::getLastDashTime() const {
+    return lastDashTime;
+}
+
 void Player::obrabotkaklavish(SDL_Event* event) {
     if (event->type == SDL_EVENT_MOUSE_BUTTON_DOWN && event->button.button == SDL_BUTTON_LEFT) {
         isAttack = true;
@@ -253,7 +264,9 @@ void Player::obrabotkaklavish(SDL_Event* event) {
         currentAnim = "idle";
     }
     if (event->type == SDL_EVENT_KEY_DOWN && event->key.key == SDLK_Q) {
-        dash();  // Просто вызов рывка
+        if (!skills.empty()) {
+            skills[0]->activate(this);  // плавный рывок через DashSkill
+        }
     }
     if (event->type == SDL_EVENT_KEY_DOWN && event->key.key== SDLK_E) {
         if (skills.size() > 1) {

@@ -33,6 +33,9 @@ public:
 
     void dash();
 
+    void setSkillActive(bool active);
+    void setLastDashTime(Uint64 t);
+    Uint64 getLastDashTime() const;
 
 private:
     void defineLook(const bool* keys);
@@ -81,6 +84,4 @@ private:
 
     // Время перезарядки рывка в мс (например, 2 секунды)
     const Uint64 dashCooldown = 2000;
-
-
 };
