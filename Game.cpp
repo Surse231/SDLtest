@@ -20,7 +20,6 @@ SDL_AppResult Game::SDL_AppInit()
     camera = new Camera(1920, 1080, 400, 200);  // СНАЧАЛА камера
 
     font = TTF_OpenFont("assets/fonts/Orbitron-VariableFont_wght.ttf", 32);
-    camera = new Camera(1920, 1080, 400, 200);
     player = new Player(renderer, font, camera);
 
 

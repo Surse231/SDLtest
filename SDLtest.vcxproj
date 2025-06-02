@@ -154,6 +154,7 @@
     <ClCompile Include="PlayerMoneyHUD.cpp" />
     <ClCompile Include="Skill.cpp" />
     <ClCompile Include="SkillHUD.cpp" />
+    <ClCompile Include="SunBeamSkill.cpp" />
     <ClCompile Include="TileMap.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -171,6 +172,7 @@
     <ClInclude Include="Skill.h" />
     <ClInclude Include="SkillHUD.h" />
     <ClInclude Include="Structs.h" />
+    <ClInclude Include="SunBeamSkill.h" />
     <ClInclude Include="TileMap.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

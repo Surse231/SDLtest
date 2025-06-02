@@ -10,9 +10,8 @@ void DashSkill::update(Player* player) {
 
     dashTime += delta;
 
-    float dx = dashSpeed * (delta / 1000.0f); // в пикселях
-    if (direction == -1)
-        dx = -dx;
+    // Смещение за этот кадр
+    float dx = static_cast<float>(direction) * dashSpeed * (delta / 1000.0f);
 
     SDL_FRect dest = player->gedDest();
     dest.x += dx;
@@ -24,23 +23,28 @@ void DashSkill::update(Player* player) {
 }
 
 
+
 DashSkill::DashSkill()
-    : isDashing(false), dashTime(0.0f), dashDuration(200.0f), dashSpeed(1500.0f), direction(1), lastTime(0)
+    : isDashing(false), dashTime(0.0f), dashDuration(200.0f), dashSpeed(1000.0f), direction(1), lastTime(0)
 {
 }
 
 
 void DashSkill::activate(Player* player) {
     Uint64 now = SDL_GetTicks();
-    if (now - player->getLastDashTime() < 2000) return;
+    if (now - lastUsedTime < cooldown || isDashing)
+        return;
 
     isDashing = true;
-    dashTime = 0.0f;
-    lastTime = SDL_GetTicks();
-    direction = player->isFlipped() ? -1 : 1;
-
-    player->setSkillActive(true);
-    player->setLastDashTime(now);
+    dashTime = 0;
+    lastTime = now;   // сброс времени для плавного обновления
+    direction = player->getDirection();
+    lastUsedTime = now;
 }
+
+
+
+
+
 
 

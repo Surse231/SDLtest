@@ -5,6 +5,8 @@
 #include <SDL3/SDL_keyboard.h>
 #include "DashSkill.h"          
 #include "FireballSkill.h"
+#include "SunBeamSkill.h"
+
 
 
 
@@ -20,8 +22,6 @@ Player::Player(SDL_Renderer* renderer, TTF_Font* font, Camera* camera)
     interface = new Interface(renderer, font, currentHealth, TotalHealth);
     skillHUD = new SkillHUD(renderer);
 
-  
-
     SDL_Texture* icon = IMG_LoadTexture(renderer, "assets/items/wood.png");
 
     dashIconTexture = IMG_LoadTexture(renderer, "assets/icons/dash.png");
@@ -34,9 +34,12 @@ Player::Player(SDL_Renderer* renderer, TTF_Font* font, Camera* camera)
     if (fireIcon) {
         skillHUD->addSkillIcon(fireIcon, "Fireball");
         skills.push_back(new FireballSkill());
+    }
 
-
-
+    SDL_Texture* sunBeamIcon = IMG_LoadTexture(renderer, "assets/icons/sunbeam.png");
+    if (sunBeamIcon) {
+        skillHUD->addSkillIcon(sunBeamIcon, "SunBeam");
+        skills.push_back(new SunBeamSkill());
     }
 
 
@@ -273,6 +276,12 @@ void Player::obrabotkaklavish(SDL_Event* event) {
             skills[1]->activate(this);  // Fireball
         }
     }
+    if (event->type == SDL_EVENT_KEY_DOWN && event->key.key == SDLK_R) {
+        if (skills.size() > 2) { // индекс 2 — это третий скилл (SunBeamSkill)
+            skills[2]->activate(this);
+        }
+    }
+
 
 }
 

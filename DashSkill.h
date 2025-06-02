@@ -1,22 +1,23 @@
 #pragma once
 #include "Skill.h"
 #include "Camera.h"
-    
+
 class DashSkill : public Skill {
 public:
     DashSkill();
+
     void activate(Player* player) override;
     void update(Player* player) override;
-    void render(SDL_Renderer*, Camera*) override {} // Пусто, если ничего не рисуешь
+    void render(SDL_Renderer*, Camera*) override {}
 
 private:
     bool isDashing = false;
     float dashTime = 0.0f;
-    float dashSpeed = 1500.0f;      // скорость рывка в пикселях в секунду
-    float dashDuration = 200.0f;   // длительность рывка в миллисекундах
+    float dashSpeed = 1500.0f;
+    float dashDuration = 200.0f;
     int direction = 1;
+
     Uint64 lastTime = 0;
+    Uint64 lastUsedTime = 0;
+    Uint64 cooldown = 1000; // здесь меняешь перезарядку
 };
-
-
-

@@ -37,6 +37,10 @@ public:
     void setLastDashTime(Uint64 t);
     Uint64 getLastDashTime() const;
 
+    int getDirection() const { return isFlipped() ? -1 : 1; }
+
+
+
 private:
     void defineLook(const bool* keys);
     void attackHandler();
@@ -84,4 +88,7 @@ private:
 
     // Время перезарядки рывка в мс (например, 2 секунды)
     const Uint64 dashCooldown = 2000;
+
+   
+
 };

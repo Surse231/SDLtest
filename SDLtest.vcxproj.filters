@@ -57,6 +57,9 @@
     <ClCompile Include="FireballSkill.cpp">
       <Filter>Исходные файлы</Filter>
     </ClCompile>
+    <ClCompile Include="SunBeamSkill.cpp">
+      <Filter>Исходные файлы</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Player.h">
@@ -102,6 +105,9 @@
       <Filter>Файлы заголовков</Filter>
     </ClInclude>
     <ClInclude Include="FireballSkill.h">
+      <Filter>Файлы заголовков</Filter>
+    </ClInclude>
+    <ClInclude Include="SunBeamSkill.h">
       <Filter>Файлы заголовков</Filter>
     </ClInclude>
   </ItemGroup>
