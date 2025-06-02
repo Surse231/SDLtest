@@ -22,7 +22,12 @@ private:
 
     Uint64 lastUpdate = 0;
 
-    SDL_FRect beamRect;
+    SDL_FRect beamRect = { 0.0f, 0.0f, 0.0f, 0.0f };
+
 
     SDL_Color beamColor = { 255, 165, 0, 220 };  // Оранжевый с прозрачностью
+
+    float cooldown = 3000.0f;              // перезарядка в миллисекундах
+    Uint64 lastActivationTime = 0;        // время последней активации
+
 };

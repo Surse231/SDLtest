@@ -3,7 +3,11 @@
 SunBeamSkill::SunBeamSkill() : active(false), beamHeight(0), beamWidth(30) {}
 
 void SunBeamSkill::activate(Player* player) {
-    if (active) return;
+    Uint64 now = SDL_GetTicks();
+
+    // Если не прошло 3 секунды с последнего использования — не активируем
+    if (active || (now - lastActivationTime < static_cast<Uint64>(cooldown)))
+        return;
 
     active = true;
     beamHeight = 0;
@@ -12,16 +16,16 @@ void SunBeamSkill::activate(Player* player) {
     maxBeamHeight = playerRect.y + playerRect.h;
 
     float direction = static_cast<float>(player->getDirection());
-    float x = playerRect.x + playerRect.w / 2.0f + direction * (playerRect.w / 2.0f);
+    float x = playerRect.x + playerRect.w / 2.0f + direction * (playerRect.w / 2.0f + 100); // чуть дальше вперёд
     beamX = x - beamWidth / 2.0f;
 
     beamRect = { beamX, 0, beamWidth, beamHeight };
 
-
-    lastUpdate = SDL_GetTicks();
-
-
+    lastUpdate = now;
+    lastActivationTime = now; // Запоминаем момент активации
 }
+
+
 
 void SunBeamSkill::update(Player* player) {
     if (!active) return;
@@ -30,7 +34,7 @@ void SunBeamSkill::update(Player* player) {
     float delta = static_cast<float>(now - lastUpdate);
     lastUpdate = now;
 
-    float speed = 0.7f;  // скорость роста луча (пикселей в мс)
+    float speed = 0.5f;  // скорость роста луча (пикселей в мс)
     beamHeight += speed * delta;
 
     SDL_FRect playerRect = player->gedDest();
