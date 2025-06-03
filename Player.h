@@ -31,7 +31,6 @@ public:
 
     bool isFlipped() const { return flip == SDL_FLIP_HORIZONTAL; }
 
-    void dash();
 
     void setSkillActive(bool active);
     void setLastDashTime(Uint64 t);

@@ -101,8 +101,7 @@ void Player::otrisovka() {
     SDL_RenderTextureRotated(renderer, anim.texture, &src, &screenDest, 0, nullptr, flip);
     interface->otrisovka();
     // твоя отрисовка персонажа
-    animationHandler.update(animations[currentAnim], src, (int)src.w, (int)src.h);
-
+    animationHandler.update(animations[currentAnim], src, (int)src.w);
 
     // отрисовка интерфейса с иконками скиллов
     skillHUD->render();
@@ -124,7 +123,23 @@ void Player::otrisovka() {
 
 
 void Player::dash() {
+    //Uint64 now = SDL_GetTicks();
 
+    //if (now - lastDashTime < dashCooldown) {
+    //    // Рывок в перезарядке — ничего не делаем
+    //    return;
+    //}
+
+    //const float dashDistance = 100.0f;
+
+    //if (isFlipped()) {
+    //    dest.x -= dashDistance;
+    //}
+    //else {
+    //    dest.x += dashDistance;
+    //}
+
+    //lastDashTime = now;
 }
 
 
@@ -152,36 +167,9 @@ void Player::defineLook(const bool* keys) {
 void Player::attackHandler() {
     if (isAttack) {
         currentAnim = "attack";
-        animationHandler.update(animations[currentAnim], src, (int)src.w, (int)src.h);
-
-
-        // Удар на определённом кадре (например, на 3-м)
-        int currentFrame = animationHandler.getCurrentFrame();
-        if (currentFrame == 3) {
-            // TODO: создать хитбокс удара или нанести урон
-        }
-
-        // Когда анимация завершена
-        if (animationHandler.isAnimationFinished()) {
-            isAttack = false;
-            animationHandler.reset();
-
-            // Вернуться к idle/walk/jump
-            if (isjump) {
-                currentAnim = "jump";
-            }
-            else if (isWalk) {
-                currentAnim = isRunning ? "run" : "walk";
-            }
-            else {
-                currentAnim = "idle";
-            }
-        }
+        animationHandler.update(animations[currentAnim], src, (int)src.w);
     }
 }
-
-
-
 
 void Player::moveHandler(const bool* keys) {
     isWalk = false;
@@ -234,8 +222,7 @@ void Player::moveHandler(const bool* keys) {
         else {
             currentAnim = "idle";
         }
-        animationHandler.update(animations[currentAnim], src, (int)src.w, (int)src.h);
-
+        animationHandler.update(animations[currentAnim], src, (int)src.w);
     }
 }
 
@@ -250,17 +237,21 @@ void Player::setCollisions(const std::vector<SDL_FRect>& rects) {
 
 
 void Player::obnovleniepersa() {
+    static Uint64 lastTime = SDL_GetTicks();  // инициализируем один раз при первом вызове
+
+    Uint64 now = SDL_GetTicks();
+    Uint64 deltaTimeMs = now - lastTime;
+    lastTime = now;
+
+    float deltaTime = deltaTimeMs / 1000.0f;  // миллисекунды в секунды
+
     const bool* keys = SDL_GetKeyboardState(nullptr);
     moveHandler(keys);
     attackHandler();
     interface->obnovlenieHUD();
 
-    Uint64 now = SDL_GetTicks();
-    static Uint64 lastTime = now;
-    Uint64 deltaTimeMs = now - lastTime;
-    lastTime = now;
+    animationHandler.update(animations[currentAnim], src, (int)src.w, true);
 
-    float deltaTime = deltaTimeMs / 1000.0f;  // перевод миллисекунд в секунды (float)
 
     for (Skill* skill : skills)
         skill->update(this, deltaTime);
@@ -281,30 +272,30 @@ Uint64 Player::getLastDashTime() const {
 
 void Player::obrabotkaklavish(SDL_Event* event) {
     if (event->type == SDL_EVENT_MOUSE_BUTTON_DOWN && event->button.button == SDL_BUTTON_LEFT) {
-        Uint32 currentTime = SDL_GetTicks(); // Текущее время в мс
-        if (currentTime - lastAttackTime >= attackCooldown) {
-            isAttack = true;
-            currentAnim = "attack";
-            animationHandler.reset();
-            lastAttackTime = currentTime; // Сохраняем время последней атаки
-        }
+        isAttack = true;
+        animationHandler.reset();
     }
-
+    if (event->type == SDL_EVENT_MOUSE_BUTTON_UP && event->button.button == SDL_BUTTON_LEFT) {
+        isAttack = false;
+        currentAnim = "idle";
+    }
     if (event->type == SDL_EVENT_KEY_DOWN && event->key.key == SDLK_Q) {
         if (!skills.empty()) {
-            skills[0]->activate(this);  // плавный рывок через DashSkill
+            skills[0]->activate(this);  // DashSkill
         }
     }
     if (event->type == SDL_EVENT_KEY_DOWN && event->key.key == SDLK_E) {
         if (skills.size() > 1) {
-            skills[1]->activate(this);  // Fireball             
+            skills[1]->activate(this);  // FireballSkill
         }
     }
     if (event->type == SDL_EVENT_KEY_DOWN && event->key.key == SDLK_R) {
-        if (skills.size() > 2) { // индекс 2 — это третий скилл (SunBeamSkill)
-            skills[2]->activate(this);
+        if (skills.size() > 2) {
+            skills[2]->activate(this);  // SunBeamSkill
         }
     }
+}
 
 
 }
+
