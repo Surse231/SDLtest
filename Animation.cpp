@@ -1,3 +1,4 @@
+// Animation.cpp
 #include "Animation.h"
 
 Animation::Animation() {}
@@ -28,22 +29,16 @@ void Animation::update(const AnimationSet& anim, SDL_FRect& src, int frameWidth,
         }
     }
 
-Animation::~Animation()
-{
+    src.x = currentFrame * frameWidth;
 }
 
 
 void Animation::reset() {
     currentFrame = 0;
-    lastUpdate = SDL_GetTicks();
+    elapsedTime = 0;
+    lastUpdate = 0;
 }
 
-void Animation::update(const AnimationSet& anim, SDL_FRect& src, int frameWidth) {
-    Uint64 now = SDL_GetTicks();
-    if (now - lastUpdate >= anim.frameDelay) {
-        currentFrame = (currentFrame + 1) % anim.frameCount;
-        src.x = currentFrame * frameWidth;
-        src.y = 0;
-        lastUpdate = now;
-    }
+bool Animation::isFinished() const {
+    return currentFrame >= frameCount - 1;
 }

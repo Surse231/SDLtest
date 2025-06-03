@@ -13,7 +13,6 @@ Game::Game() {}
 
 Game::~Game()
 {
-    delete dummy;
     delete player;
     delete menu;
     delete camera;
@@ -37,7 +36,10 @@ SDL_AppResult Game::SDL_AppInit()
     font = TTF_OpenFont("assets/fonts/Orbitron-VariableFont_wght.ttf", 32);
     camera = new Camera(1920, 1080, 400, 200);
     player = new Player(renderer, font, camera);
-    dummy = new Dummy(renderer, 600, 250);
+    enemies.push_back(new Enemy(renderer, 600, 250));
+    enemies.push_back(new Enemy(renderer, 800, 250));
+
+
 
     menu = new MainMenu(renderer, font, window);  // 🔧 добавлено
 
@@ -90,25 +92,42 @@ SDL_AppResult Game::SDL_AppIterate()
         player->obnovleniepersa();
 
         // Проверка попадания снаряда
+       // Проверка попадания снаряда Fireball по всем врагам
         for (Skill* skill : player->getSkills()) {
             FireballSkill* fireball = dynamic_cast<FireballSkill*>(skill);
-            if (fireball && fireball->isActive() && dummy) {
-                if (checkCollision(fireball->getRect(), dummy->getRect())) {
-                    dummy->takeDamage(10);    // Наносим урон
-                    fireball->deactivate();   // Деактивируем шар
+            if (fireball && fireball->isActive()) {
+                for (Enemy* enemy : enemies) {
+                    if (checkCollision(fireball->getRect(), enemy->getRect())) {
+                        enemy->takeDamage(10);
+                        fireball->deactivate();
+                        break; // чтобы не нанести урон нескольким врагам одним шаром за кадр
+                    }
                 }
             }
         }
 
-        // Обновление dummy (альфа и т.п.)
-        if (dummy) {
-            dummy->update(0.016f); // 16 мс в секундах
-            dummy->render(renderer, camera);
+        // Проверка урона от ближней атаки игрока
+        if (player->getIsAttack()) {
+            SDL_FRect attackBox = player->getAttackHitbox();
+            for (Enemy* enemy : enemies) {
+                if (checkCollision(attackBox, enemy->getRect())) {
+                    enemy->takeDamage(10);
+                }
+            }
+        }
 
-            // Удаление dummy после исчезновения
-            if (dummy->isMarkedForDeletion()) {
-                delete dummy;
-                dummy = nullptr;
+        // Обновление и отрисовка всех врагов с удалением мёртвых
+        for (auto it = enemies.begin(); it != enemies.end();) {
+            Enemy* enemy = *it;
+            enemy->update(0.016f);
+            enemy->render(renderer, camera);
+
+            if (enemy->isMarkedForDeletion()) {
+                delete enemy;
+                it = enemies.erase(it);
+            }
+            else {
+                ++it;
             }
         }
     }
@@ -131,4 +150,9 @@ SDL_FRect Game::getWindowSize() {
 void Game::SDL_AppQuit(SDL_AppResult result)
 {
     // Всё удаляется в деструкторе
+    for (Enemy* enemy : enemies) {
+        delete enemy;
+    }
+    enemies.clear();
+
 }

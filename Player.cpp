@@ -6,6 +6,9 @@
 #include "DashSkill.h"          
 #include "FireballSkill.h"
 #include "SunBeamSkill.h"
+#include "Enemy.h"  // если класс называется Ennemy, тогда "Ennemy.h"
+
+
 
 
 
@@ -101,7 +104,9 @@ void Player::otrisovka() {
     SDL_RenderTextureRotated(renderer, anim.texture, &src, &screenDest, 0, nullptr, flip);
     interface->otrisovka();
     // твоя отрисовка персонажа
-    animationHandler.update(animations[currentAnim], src, (int)src.w);
+    animationHandler.update(animations[currentAnim], src, (int)src.w, true);
+
+
 
     // отрисовка интерфейса с иконками скиллов
     skillHUD->render();
@@ -121,26 +126,11 @@ void Player::otrisovka() {
     }
 }
 
+void Player::setEnemies(const std::vector<Enemy*>& enemiesList) {
+    enemies = enemiesList;
+}   
 
-void Player::dash() {
-    //Uint64 now = SDL_GetTicks();
 
-    //if (now - lastDashTime < dashCooldown) {
-    //    // Рывок в перезарядке — ничего не делаем
-    //    return;
-    //}
-
-    //const float dashDistance = 100.0f;
-
-    //if (isFlipped()) {
-    //    dest.x -= dashDistance;
-    //}
-    //else {
-    //    dest.x += dashDistance;
-    //}
-
-    //lastDashTime = now;
-}
 
 
 
@@ -149,6 +139,7 @@ void Player::addMoney(int addedMoney) {
     money += addedMoney;
     interface->setMoney(money);
 }
+    
 
 void Player::defineLook(const bool* keys) {
     if (keys[SDL_SCANCODE_A]) {
@@ -167,9 +158,32 @@ void Player::defineLook(const bool* keys) {
 void Player::attackHandler() {
     if (isAttack) {
         currentAnim = "attack";
-        animationHandler.update(animations[currentAnim], src, (int)src.w);
+
+        // ⚠️ Наносим урон только один раз за атаку
+        if (!damageDone) {
+            for (Enemy* enemy : enemies) {
+                if (checkCollision(getAttackHitbox(), enemy->getHitbox())) {
+                    enemy->takeDamage(1);
+                }
+            }
+            damageDone = true;
+        }
+
+
+        // Обновление анимации
+        animationHandler.update(animations[currentAnim], src, (int)src.w, false);
+
+        // Сброс состояния атаки, когда анимация завершилась
+        if (animationHandler.isFinished()) {
+            isAttack = false;
+            currentAnim = "idle";
+            animationHandler.reset();
+        }
     }
 }
+
+
+
 
 void Player::moveHandler(const bool* keys) {
     isWalk = false;
@@ -222,7 +236,8 @@ void Player::moveHandler(const bool* keys) {
         else {
             currentAnim = "idle";
         }
-        animationHandler.update(animations[currentAnim], src, (int)src.w);
+        animationHandler.update(animations[currentAnim], src, (int)src.w, true);
+
     }
 }
 
@@ -235,6 +250,28 @@ void Player::setCollisions(const std::vector<SDL_FRect>& rects) {
     collisionRects = rects;
 }
 
+
+// Возвращает true, если игрок сейчас атакует
+bool Player::getIsAttack() const {
+    return isAttack;
+}
+
+SDL_FRect Player::getAttackHitbox() const {
+    float attackWidth = 40.0f; // ширина зоны атаки
+    float attackHeight = dest.h * 0.8f; // чуть меньше по высоте чем персонаж
+    float attackX;
+        
+    if (flip == SDL_FLIP_NONE) { // смотрит вправо
+        attackX = dest.x + dest.w; // справа от игрока
+    }
+    else { // смотрит влево
+        attackX = dest.x - attackWidth; // слева от игрока
+    }
+
+    float attackY = dest.y + dest.h * 0.1f; // чуть ниже верхней границы
+
+    return SDL_FRect{ attackX, attackY, attackWidth, attackHeight };
+}
 
 void Player::obnovleniepersa() {
     static Uint64 lastTime = SDL_GetTicks();  // инициализируем один раз при первом вызове
@@ -258,6 +295,12 @@ void Player::obnovleniepersa() {
 }
 
 
+bool Player::checkCollision(const SDL_FRect& a, const SDL_FRect& b)
+{
+    return a.x < b.x + b.w && a.x + a.w > b.x &&
+        a.y < b.y + b.h && a.y + a.h > b.y;
+}
+
 void Player::setSkillActive(bool active) {
     isSkillActive = active;
 }
@@ -273,12 +316,11 @@ Uint64 Player::getLastDashTime() const {
 void Player::obrabotkaklavish(SDL_Event* event) {
     if (event->type == SDL_EVENT_MOUSE_BUTTON_DOWN && event->button.button == SDL_BUTTON_LEFT) {
         isAttack = true;
+        damageDone = false;  // сбрасываем флаг урона
+        currentAnim = "attack";
         animationHandler.reset();
     }
-    if (event->type == SDL_EVENT_MOUSE_BUTTON_UP && event->button.button == SDL_BUTTON_LEFT) {
-        isAttack = false;
-        currentAnim = "idle";
-    }
+
     if (event->type == SDL_EVENT_KEY_DOWN && event->key.key == SDLK_Q) {
         if (!skills.empty()) {
             skills[0]->activate(this);  // DashSkill
@@ -297,5 +339,4 @@ void Player::obrabotkaklavish(SDL_Event* event) {
 }
 
 
-}
 

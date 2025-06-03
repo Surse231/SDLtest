@@ -7,12 +7,11 @@ class Animation {
 public:
     Animation();
     ~Animation();
-    void update(const AnimationSet& anim, SDL_FRect& src, int frameWidth);
+
+    void update(const AnimationSet& anim, SDL_FRect& src, int frameWidth, bool loop = true);
+
     void reset();
     bool isFinished() const;
-
-    int getCurrentFrame() const { return currentFrame; }
-    bool isAnimationFinished() const { return finished; }
 
 private:
     int currentFrame = 0;

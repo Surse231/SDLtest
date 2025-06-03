@@ -1,11 +1,12 @@
 #pragma once
 #include <SDL3/SDL.h>
 #include <SDL3_ttf/SDL_ttf.h>
+#include <vector>  // добавь дл€ вектора
 #include "Player.h"
 #include "MainMenu.h"
 #include "Camera.h"
 #include "TileMap.h"
-#include "Dummy.h"
+#include "Enemy.h"   // заменили Dummy на Enemy
 
 class Game
 {
@@ -27,7 +28,9 @@ private:
     Player* player = nullptr;
     TTF_Font* font = nullptr;
     MainMenu* menu = nullptr;
-    Dummy* dummy = nullptr;
     Camera* camera = nullptr;
+
+    std::vector<Enemy*> enemies;  // вместо одного dummy Ч вектор врагов
+
     SDL_FRect getWindowSize();
 };

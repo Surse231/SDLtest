@@ -1,7 +1,7 @@
-#include "Dummy.h"
+#include "Enemy.h"
 #include <SDL3_image/SDL_image.h>
 
-Dummy::Dummy(SDL_Renderer* renderer, float x, float y)
+Enemy::Enemy(SDL_Renderer* renderer, float x, float y)
     : renderer(renderer), health(100), maxHealth(100),
     damageTimer(0.0f), damageDuration(0.3f) // инициализация таймера
 {
@@ -12,12 +12,17 @@ Dummy::Dummy(SDL_Renderer* renderer, float x, float y)
     }
 }
 
-Dummy::~Dummy()
+Enemy::~Enemy()
 {
     if (texture) SDL_DestroyTexture(texture);
 }
 
-void Dummy::takeDamage(int amount) {
+SDL_FRect Enemy::getHitbox() const
+{
+    return SDL_FRect();
+}
+
+void Enemy::takeDamage(int amount) {
     if (isDead) return;
 
     health -= amount;
@@ -29,18 +34,15 @@ void Dummy::takeDamage(int amount) {
     }
 }
 
-
-
-SDL_FRect Dummy::getRect() const {
+SDL_FRect Enemy::getRect() const {
     return rect;
 }
 
-bool Dummy::isMarkedForDeletion() const {
+bool Enemy::isMarkedForDeletion() const {
     return isDead && alpha <= 0.0f;
 }
 
-
-void Dummy::render(SDL_Renderer* renderer, Camera* camera) {
+void Enemy::render(SDL_Renderer* renderer, Camera* camera) {
     SDL_FRect screenRect = camera->apply(rect);
 
     if (texture) {
@@ -80,8 +82,7 @@ void Dummy::render(SDL_Renderer* renderer, Camera* camera) {
     SDL_RenderFillRect(renderer, &healthBarFg);
 }
 
-
-void Dummy::update(float deltaTime) {
+void Enemy::update(float deltaTime) {
     if (damageTimer > 0.0f) {
         damageTimer -= deltaTime;
         if (damageTimer < 0.0f)
@@ -93,4 +94,3 @@ void Dummy::update(float deltaTime) {
         if (alpha < 0.0f) alpha = 0.0f;
     }
 }
-

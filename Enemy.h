@@ -4,10 +4,10 @@
 
 class Camera;
 
-class Dummy {
+class Enemy {
 public:
-    Dummy(SDL_Renderer* renderer, float x, float y);
-    ~Dummy();
+    Enemy(SDL_Renderer* renderer, float x, float y);
+    ~Enemy();
 
     void takeDamage(int amount);
     void render(SDL_Renderer* renderer, Camera* camera);
@@ -15,6 +15,8 @@ public:
 
     SDL_FRect getRect() const;
     bool isMarkedForDeletion() const;  // <-- добавлено
+
+    SDL_FRect getHitbox() const;
 
 private:
     SDL_Renderer* renderer;

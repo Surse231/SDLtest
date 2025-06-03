@@ -1,4 +1,3 @@
-
 #pragma once
 #include <SDL3/SDL.h>
 #include <SDL3_ttf/SDL_ttf.h>
@@ -12,14 +11,19 @@
 #include "Skill.h"
 #include "SkillHUD.h"
 
+class Enemy;
+
+
 class Player {
 public:
     Player(SDL_Renderer* renderer, TTF_Font* font, Camera* camera);
     ~Player();
 
+    void setEnemies(const std::vector<Enemy*>& enemiesList);
     void obrabotkaklavish(SDL_Event* event);
     void obnovleniepersa();
     void otrisovka();
+
 
     void setPosition(float x, float y);
     void setCollisions(const std::vector<SDL_FRect>& rects);
@@ -28,9 +32,8 @@ public:
     void addMoney(int addedMoney);
 
     bool getIsSkillActive() const { return isSkillActive; }
-
     bool isFlipped() const { return flip == SDL_FLIP_HORIZONTAL; }
-
+    bool checkCollision(const SDL_FRect& a, const SDL_FRect& b);
 
     void setSkillActive(bool active);
     void setLastDashTime(Uint64 t);
@@ -39,12 +42,20 @@ public:
     int getDirection() const { return isFlipped() ? -1 : 1; }
 
     const std::vector<Skill*>& getSkills() const {
-        return skills;  // теперь фигурна€ скобка закрыта!
+        return skills;
     }
 
-private:
+    bool getIsAttack() const;
+    SDL_FRect getAttackHitbox() const;
 
-    std::vector<Skill*> skills;  // только один раз!
+
+
+private:
+    std::map<std::string, AnimationSet> animations;
+    std::string currentAnim = "idle";
+    std::vector<Enemy*> enemies;
+    std::vector<Skill*> skills;
+    std::vector<SDL_FRect> collisionRects;
 
     void defineLook(const bool* keys);
     void attackHandler();
@@ -56,14 +67,11 @@ private:
     Interface* interface;
     Camera* camera;
 
-    std::vector<SDL_FRect> collisionRects;
 
     SkillHUD* skillHUD;
 
     SDL_Texture* dashIconTexture = nullptr;
 
-    std::map<std::string, AnimationSet> animations;
-    std::string currentAnim = "idle";
     Animation animationHandler;
 
     SDL_FRect src;
@@ -79,17 +87,18 @@ private:
     bool isAttack = false;
     bool isjump = false;
     bool isRunning = false;
+    bool damageDone = false;
+
 
     int velocityY = 0;
     static const int gravity = 1;
-    static const int sila_prizhka = -15;
+    static const int sila_prizhka = -15;    
 
     bool isSkillActive = false;
 
     Uint64 lastDashTime = 0;
     const Uint64 dashCooldown = 2000;
 
-    Uint32 lastAttackTime = 0;     // Ёто поле в классе Player или глобально, если нужно
-    const Uint32 attackCooldown = 300;  // «адержка в миллисекундах
-
+    Uint32 lastAttackTime = 0;
+    const Uint32 attackCooldown = 300;
 };
