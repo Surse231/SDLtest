@@ -1,23 +1,32 @@
 #pragma once
-#include <SDL3/SDL.h>      // для SDL_Renderer и SDL_FRect
-#include "Camera.h"        // твой класс Camera, который у тебя в проекте
+#include <SDL3/SDL.h>
+#include "Camera.h"
+
+class Camera;
 
 class Dummy {
 public:
     Dummy(SDL_Renderer* renderer, float x, float y);
     ~Dummy();
 
-    void render(SDL_Renderer* renderer, Camera* camera);
-    SDL_FRect getRect() const;
     void takeDamage(int amount);
+    void render(SDL_Renderer* renderer, Camera* camera);
+    void update(float deltaTime);
 
-    int getHealth() const { return health; }
-    int getMaxHealth() const { return maxHealth; }
+    SDL_FRect getRect() const;
+    bool isMarkedForDeletion() const;  // <-- добавлено
 
 private:
     SDL_Renderer* renderer;
-    SDL_Texture* texture;  // Текстура манекена
+    SDL_Texture* texture = nullptr;
     SDL_FRect rect;
+
     int health;
     int maxHealth;
+
+    bool isDead = false;               // <-- добавлено
+    float alpha = 255.0f;              // <-- для исчезновения
+    float fadeSpeed = 320.0f;          // <-- пикселей/сек
+    float damageTimer = 0.0f;
+    float damageDuration = 0.3f;
 };

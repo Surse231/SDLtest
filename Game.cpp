@@ -89,19 +89,28 @@ SDL_AppResult Game::SDL_AppIterate()
         player->otrisovka();
         player->obnovleniepersa();
 
-        // Здесь проверяем столкновение с огненным шаром:
+        // Проверка попадания снаряда
         for (Skill* skill : player->getSkills()) {
             FireballSkill* fireball = dynamic_cast<FireballSkill*>(skill);
-            if(fireball && fireball->isActive()) {
+            if (fireball && fireball->isActive() && dummy) {
                 if (checkCollision(fireball->getRect(), dummy->getRect())) {
-                    dummy->takeDamage(10);    // Наносим урон 10
-                    fireball->deactivate();  // Отключаем огненный шар после попадания
+                    dummy->takeDamage(10);    // Наносим урон
+                    fireball->deactivate();   // Деактивируем шар
                 }
             }
         }
 
+        // Обновление dummy (альфа и т.п.)
+        if (dummy) {
+            dummy->update(0.016f); // 16 мс в секундах
+            dummy->render(renderer, camera);
 
-        dummy->render(renderer, camera);
+            // Удаление dummy после исчезновения
+            if (dummy->isMarkedForDeletion()) {
+                delete dummy;
+                dummy = nullptr;
+            }
+        }
     }
 
     SDL_RenderPresent(renderer);
@@ -109,6 +118,7 @@ SDL_AppResult Game::SDL_AppIterate()
 
     return quit ? SDL_APP_SUCCESS : SDL_APP_CONTINUE;
 }
+
 
 SDL_FRect Game::getWindowSize() {
     int w, h;

@@ -23,13 +23,14 @@ void DashSkill::update(Player* player, float deltaTime) {
 
     dashTime += deltaTime;
 
-    float dx = static_cast<float>(direction) * dashSpeed * (deltaTime / 1000.0f);
+    float dx = static_cast<float>(direction) * dashSpeed * deltaTime;
 
     SDL_FRect dest = player->gedDest();
     dest.x += dx;
     player->setPosition(dest.x, dest.y);
 
-    if (dashTime >= dashDuration) {
+    if (dashTime >= (dashDuration / 1000.0f)) {  // тоже нужно перевести в секунды
         isDashing = false;
     }
 }
+
