@@ -11,7 +11,6 @@
 #include "Skill.h"
 #include "SkillHUD.h"
 
-
 class Player {
 public:
     Player(SDL_Renderer* renderer, TTF_Font* font, Camera* camera);
@@ -39,9 +38,14 @@ public:
 
     int getDirection() const { return isFlipped() ? -1 : 1; }
 
-
+    const std::vector<Skill*>& getSkills() const {
+        return skills;  // теперь фигурная скобка закрыта!
+    }
 
 private:
+
+    std::vector<Skill*> skills;  // только один раз!
+
     void defineLook(const bool* keys);
     void attackHandler();
     void moveHandler(const bool* keys);
@@ -53,10 +57,9 @@ private:
     Camera* camera;
 
     std::vector<SDL_FRect> collisionRects;
-        
-    std::vector<Skill*> skills;
+
     SkillHUD* skillHUD;
-    
+
     SDL_Texture* dashIconTexture = nullptr;
 
     std::map<std::string, AnimationSet> animations;
@@ -76,19 +79,13 @@ private:
     bool isAttack = false;
     bool isjump = false;
     bool isRunning = false;
-        
+
     int velocityY = 0;
     static const int gravity = 1;
     static const int sila_prizhka = -15;
 
     bool isSkillActive = false;
 
-    // Время последнего рывка в миллисекундах
     Uint64 lastDashTime = 0;
-
-    // Время перезарядки рывка в мс (например, 2 секунды)
     const Uint64 dashCooldown = 2000;
-
-   
-
 };

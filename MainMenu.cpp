@@ -51,8 +51,8 @@ void MainMenu::renderButton(const SDL_FRect& rect, const std::string& text) {
 
 void MainMenu::handleEvent(const SDL_Event& e, bool& resume, bool& quit) {
     int w, h;
-        SDL_GetWindowSize(window, &w, &h);
-    float centerX =  2560/ 2.0f - 200.f / 2.0f;
+    SDL_GetWindowSize(window, &w, &h);
+    float centerX = w / 2.0f - 200.f / 2.0f;
     float x = e.button.x;
     float y = e.button.y;
     if (e.type == SDL_EVENT_MOUSE_BUTTON_DOWN) {

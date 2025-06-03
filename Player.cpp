@@ -51,6 +51,13 @@ Player::~Player() {
     }
 
     delete interface;
+    delete skillHUD;
+    for (Skill* skill : skills) {
+        delete skill;
+    }
+    skills.clear();
+
+    if (dashIconTexture) SDL_DestroyTexture(dashIconTexture);
 }
 
 void Player::initAnimations() {
@@ -96,22 +103,24 @@ void Player::otrisovka() {
     // твоя отрисовка персонажа
     animationHandler.update(animations[currentAnim], src, (int)src.w);
 
-
     // отрисовка интерфейса с иконками скиллов
     skillHUD->render();
 
-    // убираем оба вызова
-  // вместо этого используем:
-    for (Skill* skill : skills)
-        skill->update(this);
+    static Uint64 lastTime = SDL_GetTicks();
+    Uint64 now = SDL_GetTicks();
+    Uint64 deltaTimeMs = now - lastTime;
+    lastTime = now;
 
-   
+    float deltaTime = deltaTimeMs / 1000.0f; // миллисекунды в секунды
+
+    for (Skill* skill : skills)
+        skill->update(this, deltaTime);
+
     for (Skill* skill : skills) {
-        // Предполагается, что render принимает SDL_Renderer* и камеру
         skill->render(renderer, camera);
     }
-
 }
+
 
 void Player::dash() {
     //Uint64 now = SDL_GetTicks();
@@ -235,15 +244,15 @@ void Player::obnovleniepersa() {
 
     Uint64 now = SDL_GetTicks();
     static Uint64 lastTime = now;
-    Uint64 deltaTime = now - lastTime;
+    Uint64 deltaTimeMs = now - lastTime;
     lastTime = now;
 
-    if (skills.size() > 1)
-        skills[1]->update(this);
+    float deltaTime = deltaTimeMs / 1000.0f;  // перевод миллисекунд в секунды (float)
 
-
-
+    for (Skill* skill : skills)
+        skill->update(this, deltaTime);
 }
+
 
 void Player::setSkillActive(bool active) {
     isSkillActive = active;
@@ -273,7 +282,7 @@ void Player::obrabotkaklavish(SDL_Event* event) {
     }
     if (event->type == SDL_EVENT_KEY_DOWN && event->key.key== SDLK_E) {
         if (skills.size() > 1) {
-            skills[1]->activate(this);  // Fireball
+            skills[1]->activate(this);  // Fireball             
         }
     }
     if (event->type == SDL_EVENT_KEY_DOWN && event->key.key == SDLK_R) {

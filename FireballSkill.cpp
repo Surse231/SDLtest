@@ -3,7 +3,7 @@
 FireballSkill::FireballSkill()
     : active(false),
     fireballRect{ 0, 0, WIDTH, HEIGHT },
-    fireballSpeed(10.0f),
+    fireballSpeed(600.0f), // скорость пикселей в секунду
     fireballDirection(1.0f)
 {
 }
@@ -22,13 +22,17 @@ void FireballSkill::activate(Player* player) {
 
     active = true;
 }
+int windowWidth = 800;  // или другое начальное значение
 
-void FireballSkill::update(Player* player) {
+void FireballSkill::update(Player* player, float deltaTime) {
     if (!active) return;
 
-    fireballRect.x += fireballSpeed * fireballDirection;
+    fireballRect.x += fireballSpeed * fireballDirection * deltaTime;
 
-    if (fireballRect.x < 0 || fireballRect.x > 800) {
+    // Здесь windowWidth — ширина окна, её нужно    получить извне (например, глобальная переменная или параметр)
+    extern int windowWidth;
+
+    if (fireballRect.x < 0 || fireballRect.x > windowWidth) {
         active = false;
     }
 }
@@ -41,4 +45,3 @@ void FireballSkill::render(SDL_Renderer* renderer, Camera* camera) {
     SDL_SetRenderDrawColor(renderer, 255, 100, 0, 255);
     SDL_RenderFillRect(renderer, &screenRect);
 }
-

@@ -144,6 +144,7 @@
     <ClCompile Include="Animation.cpp" />
     <ClCompile Include="Camera.cpp" />
     <ClCompile Include="DashSkill.cpp" />
+    <ClCompile Include="Dummy.cpp" />
     <ClCompile Include="FireballSkill.cpp" />
     <ClCompile Include="Game.cpp" />
     <ClCompile Include="Interface.cpp" />
@@ -161,6 +162,7 @@
     <ClInclude Include="Animation.h" />
     <ClInclude Include="Camera.h" />
     <ClInclude Include="DashSkill.h" />
+    <ClInclude Include="Dummy.h" />
     <ClInclude Include="FireballSkill.h" />
     <ClInclude Include="Game.h" />
     <ClInclude Include="Interface.h" />

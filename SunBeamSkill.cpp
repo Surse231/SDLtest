@@ -1,11 +1,9 @@
 #include "SunBeamSkill.h"
 
-SunBeamSkill::SunBeamSkill() : active(false), beamHeight(0), beamWidth(30) {}
+SunBeamSkill::SunBeamSkill() {}
 
 void SunBeamSkill::activate(Player* player) {
     Uint64 now = SDL_GetTicks();
-
-    // Если не прошло 3 секунды с последнего использования — не активируем
     if (active || (now - lastActivationTime < static_cast<Uint64>(cooldown)))
         return;
 
@@ -16,34 +14,24 @@ void SunBeamSkill::activate(Player* player) {
     maxBeamHeight = playerRect.y + playerRect.h;
 
     float direction = static_cast<float>(player->getDirection());
-    float x = playerRect.x + playerRect.w / 2.0f + direction * (playerRect.w / 2.0f + 100); // чуть дальше вперёд
+    float x = playerRect.x + playerRect.w / 2.0f + direction * (playerRect.w / 2.0f + 100);
     beamX = x - beamWidth / 2.0f;
 
     beamRect = { beamX, 0, beamWidth, beamHeight };
 
     lastUpdate = now;
-    lastActivationTime = now; // Запоминаем момент активации
+    lastActivationTime = now;
 }
 
-
-
-void SunBeamSkill::update(Player* player) {
+void SunBeamSkill::update(Player* player, float deltaTime) {
     if (!active) return;
 
-    Uint64 now = SDL_GetTicks();
-    float delta = static_cast<float>(now - lastUpdate);
-    lastUpdate = now;
+    float speed = 900000.0f; // пикселей в секунду — увеличил скорость
+    float seconds = deltaTime * 0.001f; // перевод из миллисекунд в секунды
 
-    float speed = 0.5f;  // скорость роста луча (пикселей в мс)
-    beamHeight += speed * delta;
+    beamHeight += speed * seconds;
 
-    SDL_FRect playerRect = player->gedDest();
-    float direction = static_cast<float>(player->getDirection());
-    float x = playerRect.x + playerRect.w / 2.0f + direction * (playerRect.w / 2.0f);
-
-    beamHeight += speed * delta;
-
-    beamRect.x = beamX;  // не пересчитываем!
+    beamRect.x = beamX;
     beamRect.y = 0;
     beamRect.w = beamWidth;
     beamRect.h = beamHeight;
@@ -52,8 +40,8 @@ void SunBeamSkill::update(Player* player) {
         beamHeight = maxBeamHeight;
         active = false;
     }
-
 }
+
 
 void SunBeamSkill::render(SDL_Renderer* renderer, Camera* camera) {
     if (!active) return;

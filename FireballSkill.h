@@ -9,8 +9,13 @@ public:
     FireballSkill();
 
     void activate(Player* player) override;
-    void update(Player* player) override;
-    void render(SDL_Renderer* renderer, Camera* camera);
+    void update(Player* player, float deltaTime) override;
+    void render(SDL_Renderer* renderer, Camera* camera) override;
+
+    SDL_FRect getRect() const { return fireballRect; }
+    bool isActive() const { return active; }
+
+    void deactivate() { active = false; }
 
 private:
     bool active;
