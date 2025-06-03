@@ -101,7 +101,8 @@ void Player::otrisovka() {
     SDL_RenderTextureRotated(renderer, anim.texture, &src, &screenDest, 0, nullptr, flip);
     interface->otrisovka();
     // твоя отрисовка персонажа
-    animationHandler.update(animations[currentAnim], src, (int)src.w);
+    animationHandler.update(animations[currentAnim], src, (int)src.w, (int)src.h);
+
 
     // отрисовка интерфейса с иконками скиллов
     skillHUD->render();
@@ -123,23 +124,7 @@ void Player::otrisovka() {
 
 
 void Player::dash() {
-    //Uint64 now = SDL_GetTicks();
 
-    //if (now - lastDashTime < dashCooldown) {
-    //    // Рывок в перезарядке — ничего не делаем
-    //    return;
-    //}
-
-    //const float dashDistance = 100.0f;
-
-    //if (isFlipped()) {
-    //    dest.x -= dashDistance;
-    //}
-    //else {
-    //    dest.x += dashDistance;
-    //}
-
-    //lastDashTime = now;
 }
 
 
@@ -167,9 +152,36 @@ void Player::defineLook(const bool* keys) {
 void Player::attackHandler() {
     if (isAttack) {
         currentAnim = "attack";
-        animationHandler.update(animations[currentAnim], src, (int)src.w);
+        animationHandler.update(animations[currentAnim], src, (int)src.w, (int)src.h);
+
+
+        // Удар на определённом кадре (например, на 3-м)
+        int currentFrame = animationHandler.getCurrentFrame();
+        if (currentFrame == 3) {
+            // TODO: создать хитбокс удара или нанести урон
+        }
+
+        // Когда анимация завершена
+        if (animationHandler.isAnimationFinished()) {
+            isAttack = false;
+            animationHandler.reset();
+
+            // Вернуться к idle/walk/jump
+            if (isjump) {
+                currentAnim = "jump";
+            }
+            else if (isWalk) {
+                currentAnim = isRunning ? "run" : "walk";
+            }
+            else {
+                currentAnim = "idle";
+            }
+        }
     }
 }
+
+
+
 
 void Player::moveHandler(const bool* keys) {
     isWalk = false;
@@ -222,7 +234,8 @@ void Player::moveHandler(const bool* keys) {
         else {
             currentAnim = "idle";
         }
-        animationHandler.update(animations[currentAnim], src, (int)src.w);
+        animationHandler.update(animations[currentAnim], src, (int)src.w, (int)src.h);
+
     }
 }
 
@@ -268,19 +281,21 @@ Uint64 Player::getLastDashTime() const {
 
 void Player::obrabotkaklavish(SDL_Event* event) {
     if (event->type == SDL_EVENT_MOUSE_BUTTON_DOWN && event->button.button == SDL_BUTTON_LEFT) {
-        isAttack = true;
-        animationHandler.reset();
+        Uint32 currentTime = SDL_GetTicks(); // Текущее время в мс
+        if (currentTime - lastAttackTime >= attackCooldown) {
+            isAttack = true;
+            currentAnim = "attack";
+            animationHandler.reset();
+            lastAttackTime = currentTime; // Сохраняем время последней атаки
+        }
     }
-    if (event->type == SDL_EVENT_MOUSE_BUTTON_UP && event->button.button == SDL_BUTTON_LEFT) {
-        isAttack = false;
-        currentAnim = "idle";
-    }
+
     if (event->type == SDL_EVENT_KEY_DOWN && event->key.key == SDLK_Q) {
         if (!skills.empty()) {
             skills[0]->activate(this);  // плавный рывок через DashSkill
         }
     }
-    if (event->type == SDL_EVENT_KEY_DOWN && event->key.key== SDLK_E) {
+    if (event->type == SDL_EVENT_KEY_DOWN && event->key.key == SDLK_E) {
         if (skills.size() > 1) {
             skills[1]->activate(this);  // Fireball             
         }
@@ -293,4 +308,3 @@ void Player::obrabotkaklavish(SDL_Event* event) {
 
 
 }
-

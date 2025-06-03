@@ -1,10 +1,11 @@
+
 #pragma once
 #include <SDL3/SDL.h>
 #include <SDL3_ttf/SDL_ttf.h>
 #include <map>
 #include <string>
 #include <vector>
-#include "Structs.h"
+#include "Structs.h"    
 #include "Animation.h"
 #include "Interface.h"
 #include "Camera.h"
@@ -88,4 +89,8 @@ private:
 
     Uint64 lastDashTime = 0;
     const Uint64 dashCooldown = 2000;
+
+    Uint32 lastAttackTime = 0;     // Это поле в классе Player или глобально, если нужно
+    const Uint32 attackCooldown = 300;  // Задержка в миллисекундах
+
 };
