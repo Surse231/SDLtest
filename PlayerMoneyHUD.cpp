@@ -21,6 +21,10 @@ void PlayerMoneyHUD::otrisovka() const
 	SDL_DestroyTexture(Texture);
 }
 
+void PlayerMoneyHUD::changeMoney()
+{
+}
+
 
 void PlayerMoneyHUD::obnovlenieText()
 {

@@ -25,7 +25,7 @@ void DashSkill::update(Player* player, float deltaTime) {
 
     float dx = static_cast<float>(direction) * dashSpeed * deltaTime;
 
-    SDL_FRect dest = player->gedDest();
+    SDL_FRect dest = player->getDest();
     dest.x += dx;
     player->setPosition(dest.x, dest.y);
 

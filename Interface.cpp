@@ -28,3 +28,7 @@ void Interface::setMoney(int newMoney)
 {
     playerMoneyHUD->setMoney(newMoney);
 }
+
+void Interface::changeMoney()
+{
+}

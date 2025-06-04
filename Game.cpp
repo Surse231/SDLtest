@@ -3,11 +3,11 @@
 #include <string>
 #include "FireballSkill.h"
 
-
 bool checkCollision(const SDL_FRect& a, const SDL_FRect& b) {
-    return !(a.x + a.w < b.x || b.x + b.w < a.x ||
-        a.y + a.h < b.y || b.y + b.h < a.y);
+    return a.x < b.x + b.w && a.x + a.w > b.x &&
+        a.y < b.y + b.h && a.y + a.h > b.y;
 }
+
 
 Game::Game() {}
 
@@ -35,9 +35,12 @@ SDL_AppResult Game::SDL_AppInit()
 
     font = TTF_OpenFont("assets/fonts/Orbitron-VariableFont_wght.ttf", 32);
     camera = new Camera(1920, 1080, 400, 200);
-    player = new Player(renderer, font, camera);
     enemies.push_back(new Enemy(renderer, 600, 250));
     enemies.push_back(new Enemy(renderer, 800, 250));
+
+    player = new Player(renderer, font, camera);
+    player->setEnemies(enemies); // ✅ правильно
+
 
 
 
@@ -86,7 +89,7 @@ SDL_AppResult Game::SDL_AppIterate()
         menu->render();
     }
     else {
-        camera->update(player->gedDest());
+        camera->update(player->getDest());
 
         player->otrisovka();
         player->obnovleniepersa();
@@ -107,7 +110,7 @@ SDL_AppResult Game::SDL_AppIterate()
         }
 
         // Проверка урона от ближней атаки игрока
-        if (player->getIsAttack()) {
+        if (player->getIsAttack() && player->getCurrentAttackFrame() == 5) {
             SDL_FRect attackBox = player->getAttackHitbox();
             for (Enemy* enemy : enemies) {
                 if (checkCollision(attackBox, enemy->getRect())) {
@@ -115,6 +118,7 @@ SDL_AppResult Game::SDL_AppIterate()
                 }
             }
         }
+
 
         // Обновление и отрисовка всех врагов с удалением мёртвых
         for (auto it = enemies.begin(); it != enemies.end();) {

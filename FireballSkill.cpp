@@ -11,7 +11,7 @@ FireballSkill::FireballSkill()
 void FireballSkill::activate(Player* player) {
     if (active) return;
 
-    SDL_FRect playerRect = player->gedDest();
+    SDL_FRect playerRect = player->getDest();
 
     float fireballX = playerRect.x + (playerRect.w / 2) - (WIDTH / 2);
     float fireballY = playerRect.y + (playerRect.h / 2) - (HEIGHT / 2);

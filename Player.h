@@ -28,7 +28,8 @@ public:
     void setPosition(float x, float y);
     void setCollisions(const std::vector<SDL_FRect>& rects);
 
-    SDL_FRect gedDest() { return dest; }
+    SDL_FRect getDest() const { return dest; }
+
     void addMoney(int addedMoney);
 
     bool getIsSkillActive() const { return isSkillActive; }
@@ -40,6 +41,7 @@ public:
     Uint64 getLastDashTime() const;
 
     int getDirection() const { return isFlipped() ? -1 : 1; }
+    int getCurrentAttackFrame() const { return animationHandler.getCurrentFrame(); }
 
     const std::vector<Skill*>& getSkills() const {
         return skills;
@@ -79,6 +81,7 @@ private:
     SDL_FRect dest;
     SDL_FlipMode flip;
 
+    int previousFrame = -1; // Добавь это в private-секцию Player
     int speed;
     int currentHealth;
     int TotalHealth;
@@ -90,7 +93,7 @@ private:
     bool isjump = false;
     bool isRunning = false;
     bool damageDone = false;
-
+    bool hasDealtDamage = false;
 
     int velocityY = 0;
     static const int gravity = 1;
