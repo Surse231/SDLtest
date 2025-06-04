@@ -48,6 +48,7 @@ public:
     bool getIsAttack() const;
     SDL_FRect getAttackHitbox() const;
 
+    void setAnimation(const std::string& animName, bool loop);
 
 
 private:
@@ -83,6 +84,7 @@ private:
     int TotalHealth;
     int money = 0;
 
+    bool currentLoop = true;
     bool isWalk = false;
     bool isAttack = false;
     bool isjump = false;

@@ -1,15 +1,15 @@
-// Animation.cpp
 #include "Animation.h"
 
 Animation::Animation() {}
 Animation::~Animation() {}
 
 void Animation::update(const AnimationSet& anim, SDL_FRect& src, int frameWidth, bool loop) {
-    frameCount = anim.frameCount; // добавь сюда!
+    frameCount = anim.frameCount;  // ќЅя«ј“≈Ћ№Ќќ обновл€ть frameCount дл€ корректной работы
 
     Uint64 now = SDL_GetTicks();
     if (lastUpdate == 0) {
         lastUpdate = now;
+        return; // первый вызов Ч не двигаем кадры
     }
 
     Uint64 delta = now - lastUpdate;
@@ -29,7 +29,8 @@ void Animation::update(const AnimationSet& anim, SDL_FRect& src, int frameWidth,
         }
     }
 
-    src.x = currentFrame * frameWidth;
+    src.x = static_cast<float>(currentFrame * frameWidth);
+    src.y = 0; // если у вас одна строка кадров, фиксируем Y на 0
 }
 
 
@@ -37,6 +38,7 @@ void Animation::reset() {
     currentFrame = 0;
     elapsedTime = 0;
     lastUpdate = 0;
+    // Ћучше сброс src делать в вызывающем коде (Player)
 }
 
 bool Animation::isFinished() const {

@@ -103,11 +103,7 @@ void Player::otrisovka() {
     SDL_FRect screenDest = camera->apply(dest);
     SDL_RenderTextureRotated(renderer, anim.texture, &src, &screenDest, 0, nullptr, flip);
     interface->otrisovka();
-    // твоя отрисовка персонажа
-    animationHandler.update(animations[currentAnim], src, (int)src.w, true);
-
-
-
+ 
     // отрисовка интерфейса с иконками скиллов
     skillHUD->render();
 
@@ -132,7 +128,16 @@ void Player::setEnemies(const std::vector<Enemy*>& enemiesList) {
 
 
 
+void Player::setAnimation(const std::string& animName, bool loop) {
+    if (currentAnim != animName) {
+        currentAnim = animName;
+        animationHandler.reset();
 
+        src.x = 0;
+        src.y = 0;
+        currentLoop = loop;
+    }
+}
 
 
 void Player::addMoney(int addedMoney) {
@@ -156,47 +161,42 @@ void Player::defineLook(const bool* keys) {
 }
 
 void Player::attackHandler() {
-    if (isAttack) {
-        currentAnim = "attack";
+    if (!isAttack) return;
+    // Атака на 3-м кадре (индекс 2)
+    if (animationHandler.getCurrentFrame() == 2 && !damageDone) {
+        for (Enemy* enemy : enemies) {
+            if (!enemy) continue;
 
-        // ⚠️ Наносим урон только один раз за атаку
-        if (!damageDone) {
-            for (Enemy* enemy : enemies) {
-                if (checkCollision(getAttackHitbox(), enemy->getHitbox())) {
-                    enemy->takeDamage(1);
-                }
+            if (checkCollision(getAttackHitbox(), enemy->getHitbox())) {
+                enemy->takeDamage(10);
             }
-            damageDone = true;
         }
+        damageDone = true;
+    }
 
-
-        // Обновление анимации
-        animationHandler.update(animations[currentAnim], src, (int)src.w, false);
-
-        // Сброс состояния атаки, когда анимация завершилась
-        if (animationHandler.isFinished()) {
-            isAttack = false;
-            currentAnim = "idle";
-            animationHandler.reset();
-        }
+    if (animationHandler.isFinished()) {
+        isAttack = false;
+        damageDone = false;
+        currentAnim = "idle";
+        animationHandler.reset();
     }
 }
-
-
-
 
 void Player::moveHandler(const bool* keys) {
     isWalk = false;
     isRunning = false;
-    defineLook(keys);
 
-    int actualSpeed = speed;
-
-    if (keys[SDL_SCANCODE_LSHIFT]) {
-        isRunning = true;
-        actualSpeed = speed * 2;  // ускорение
+    // Определяем направление и состояние
+    if (keys[SDL_SCANCODE_A]) {
+        flip = SDL_FLIP_HORIZONTAL;
+        isWalk = true;
+    }
+    else if (keys[SDL_SCANCODE_D]) {
+        flip = SDL_FLIP_NONE;
+        isWalk = true;
     }
 
+    // Прыжок
     if (keys[SDL_SCANCODE_SPACE] && !isjump) {
         velocityY = sila_prizhka;
         isjump = true;
@@ -205,41 +205,41 @@ void Player::moveHandler(const bool* keys) {
     if (isjump) {
         dest.y += velocityY;
         velocityY += gravity;
-        currentAnim = "jump";
+        if (dest.y >= 250) {
+            dest.y = 250;
+            isjump = false;
+            velocityY = 0;
+        }
     }
 
-    if (dest.y >= 250) {
-        dest.y = 250;
-        isjump = false;
-        velocityY = 0;
+    int actualSpeed = speed;
+    if (keys[SDL_SCANCODE_LSHIFT]) {
+        isRunning = true;
+        actualSpeed = speed * 2;
     }
 
     if (keys[SDL_SCANCODE_A]) {
         dest.x -= actualSpeed;
-        flip = SDL_FLIP_HORIZONTAL;
-        isWalk = true;
     }
     if (keys[SDL_SCANCODE_D]) {
         dest.x += actualSpeed;
-        flip = SDL_FLIP_NONE;
-        isWalk = true;
     }
 
-    // Выбор анимации
-    if (!isAttack) {
-        if (isjump) {
-            currentAnim = "jump";
-        }
-        else if (isWalk) {
-            currentAnim = isRunning ? "run" : "walk";
-        }
-        else {
-            currentAnim = "idle";
-        }
-        animationHandler.update(animations[currentAnim], src, (int)src.w, true);
-
+    // Устанавливаем анимацию в зависимости от состояния
+    if (isAttack) {
+        // Не меняем анимацию при атаке, она будет обновляться отдельно
+    }
+    else if (isjump) {
+        setAnimation("jump", true);
+    }
+    else if (isWalk) {
+        setAnimation(isRunning ? "run" : "walk", true);
+    }
+    else {
+        setAnimation("idle", true);
     }
 }
+
 
 
 void Player::setPosition(float x, float y) {
@@ -274,25 +274,35 @@ SDL_FRect Player::getAttackHitbox() const {
 }
 
 void Player::obnovleniepersa() {
-    static Uint64 lastTime = SDL_GetTicks();  // инициализируем один раз при первом вызове
+    static Uint64 lastTime = SDL_GetTicks();
 
     Uint64 now = SDL_GetTicks();
     Uint64 deltaTimeMs = now - lastTime;
     lastTime = now;
 
-    float deltaTime = deltaTimeMs / 1000.0f;  // миллисекунды в секунды
+    float deltaTime = deltaTimeMs / 1000.0f;
 
     const bool* keys = SDL_GetKeyboardState(nullptr);
+
+    // Всегда вызываем движение
     moveHandler(keys);
-    attackHandler();
+
     interface->obnovlenieHUD();
 
-    animationHandler.update(animations[currentAnim], src, (int)src.w, true);
+    const AnimationSet& currentAnimation = animations[currentAnim];
 
+    // loop=false для анимации атаки, чтобы она дошла до конца
+    bool loopAnim = (currentAnim != "attack");
+
+    animationHandler.update(currentAnimation, src, 48 /* ширина кадра для ваших спрайтов */, loopAnim);
+
+
+    attackHandler();
 
     for (Skill* skill : skills)
         skill->update(this, deltaTime);
 }
+
 
 
 bool Player::checkCollision(const SDL_FRect& a, const SDL_FRect& b)
