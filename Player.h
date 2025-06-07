@@ -51,7 +51,12 @@ public:
     SDL_FRect getAttackHitbox() const;
 
     void setAnimation(const std::string& animName, bool loop);
+    SDL_FRect getRect() const;
 
+    void takeDamage(int amount);
+
+    bool isDead() const { return currentHealth <= 0; }
+    int getHealth() const { return currentHealth; }
 
 private:
     std::map<std::string, AnimationSet> animations;
@@ -77,6 +82,7 @@ private:
 
     Animation animationHandler;
 
+    SDL_FRect rect;
     SDL_FRect src;
     SDL_FRect dest;
     SDL_FlipMode flip;
@@ -106,4 +112,5 @@ private:
 
     Uint32 lastAttackTime = 0;
     const Uint32 attackCooldown = 300;
+
 };

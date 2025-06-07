@@ -20,6 +20,7 @@
         initAnimations();
         src = { 0, 0, 48, 48 };
         dest = { 200, 250, 96, 96 }; // Вернули персонажа выше
+        rect = { 400.0f, 300.0f, 64.0f, 64.0f };
 
         speed = 5;
         currentHealth = 50;
@@ -103,6 +104,17 @@
         SDL_RenderTextureRotated(renderer, anim.texture, &src, &screenDest, 0, nullptr, flip);
         interface->otrisovka();
  
+        // Прямоугольник здоровья
+        SDL_FRect hpBg = { dest.x, dest.y - 20, 100, 10 };
+        SDL_FRect hpBar = { dest.x, dest.y - 20, currentHealth, 10 };
+
+        SDL_SetRenderDrawColor(renderer, 80, 80, 80, 255);
+        SDL_RenderFillRect(renderer, &hpBg);
+
+        SDL_SetRenderDrawColor(renderer, 255, 0, 0, 255);
+        SDL_RenderFillRect(renderer, &hpBar);
+
+
         // отрисовка интерфейса с иконками скиллов
         skillHUD->render();
 
@@ -134,6 +146,12 @@
             currentLoop = loop;
         }
     }
+
+    SDL_FRect Player::getRect() const {
+        return rect; // rect - текущий прямоугольник игрока, меняется при движении
+    }
+
+
 
 
     void Player::addMoney(int addedMoney) {
@@ -318,6 +336,9 @@
 
         for (Skill* skill : skills)
             skill->update(this, deltaTime);
+
+        rect = dest;  // чтобы getRect() возвращал актуальные координаты
+
     }
 
 
@@ -333,6 +354,12 @@
         return collidingX && collidingY;
     }   
 
+
+    void Player::takeDamage(int amount) {
+        if (currentHealth <= 0) return;
+        currentHealth -= amount;
+        if (currentHealth < 0) currentHealth = 0;
+    }
 
 
 
