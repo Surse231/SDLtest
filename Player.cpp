@@ -23,7 +23,7 @@
         rect = { 400.0f, 300.0f, 64.0f, 64.0f };
 
         speed = 5;
-        currentHealth = 50;
+        currentHealth = 10000000;
         TotalHealth = 100;
         interface = new Interface(renderer, font, currentHealth, TotalHealth);
         skillHUD = new SkillHUD(renderer);

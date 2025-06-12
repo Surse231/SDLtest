@@ -11,8 +11,8 @@ static float distanceBetween(const SDL_FRect& a, const SDL_FRect& b) {
     return sqrtf(dx * dx + dy * dy);
 }
 
-Enemy::Enemy(SDL_Renderer* renderer, float x, float y)
-    : renderer(renderer), health(100), maxHealth(100)
+Enemy::Enemy(SDL_Renderer* renderer, float x, float y, EnemyType type)
+    : renderer(renderer), health(100), maxHealth(100), type(type)
 {
     spawnPoint = { x, y };
     rect = { x, y, 90, 90 };
@@ -31,6 +31,29 @@ Enemy::Enemy(SDL_Renderer* renderer, float x, float y)
     loadTexture("attack", "assets/1 Enemies/2/attack.png");
     loadTexture("hurt", "assets/1 Enemies/2/hurt.png");
     loadTexture("death", "assets/1 Enemies/2/death.png");
+    loadTexture("slime-walk", "assets/1 Enemies/animals/slime_monster_spritesheet.png");
+    loadTexture("deer-run", "assets/1 Enemies/animals/reindeer-m-run.png");
+    loadTexture("ovca-walk", "assets/1 Enemies/animals/ram_walk.png");
+    loadTexture("ovca-eat", "assets/1 Enemies/animals/ram eat.png");
+    loadTexture("polar-bear", "assets/1 Enemies/animals/polar_bear.png");
+    loadTexture("fox", "assets/1 Enemies/animals/fox-SWEN-bright.png");
+    loadTexture("boar-walk", "assets/1 Enemies/animals/Boar Walk.png");
+    loadTexture("boar-stand", "assets/1 Enemies/animals/Boar Stand.png");
+    loadTexture("boar-die", "assets/1 Enemies/animals/Boar Die.png");
+    loadTexture("boar-attack", "assets/1 Enemies/animals/Boar Attack.png");
+    loadTexture("black-bear", "assets/1 Enemies/animals/black_bear.png");
+    loadTexture("bird_spparow", "assets/1 Enemies/animals/bird_3_sparrow.png");
+    loadTexture("bird_white", "assets/1 Enemies/animals/bird_2_white.png");
+    loadTexture("bird_eagle", "assets/1 Enemies/animals/bird_2_eagle.png");
+    loadTexture("bird_brown", "assets/1 Enemies/animals/bird_2_brown_1.png");
+    loadTexture("bird_blue", "assets/1 Enemies/animals/bird_2_blue.png");
+    loadTexture("bear", "assets/1 Enemies/animals/bear.png");
+    loadTexture("bat", "assets/1 Enemies/animals/bat-orig.png");
+    loadTexture("goat_walk", "assets/1 Enemies/animals/goat_walk.png");
+    loadTexture("goat_eat", "assets/1 Enemies/animals/goat_eat.png");
+
+    initRectSize();
+
 
     setAnimation("idle");
 }
@@ -52,13 +75,24 @@ void Enemy::setAnimation(const std::string& anim) {
 
 
     currentAnim = anim;
+    if (frameCounts.count(anim) == 0) return;
     totalFrames = frameCounts[anim];
 
-    float texW = 0.0f, texH = 0.0f;
-    SDL_GetTextureSize(textures[anim], &texW, &texH);
 
-    frameWidth = static_cast<int>(texW) / totalFrames;
-    frameHeight = static_cast<int>(texH);
+    SDL_Texture* tex = textures[anim];
+    if (!tex) return;
+
+    currentAnim = anim;
+
+    if (frameCounts.count(anim) == 0) return;
+    totalFrames = frameCounts[anim];
+
+    float w = 0.0f, h = 0.0f;
+    SDL_GetTextureSize(tex, &w, &h);
+
+    // Сохраняем размеры кадра
+    frameWidth = static_cast<int>(w) / totalFrames;
+    frameHeight = static_cast<int>(h);
 
     currentFrame = 0;
     animationTimer = 0.0f;
@@ -66,18 +100,37 @@ void Enemy::setAnimation(const std::string& anim) {
 
 void Enemy::takeDamage(int amount) {
     if (isDead) return;
+
     health -= amount;
+
     if (health <= 0) {
         health = 0;
         isDead = true;
-        setAnimation("death");
         state = EnemyState::Dead;
+
+        // Не вызываем setAnimation("death")
+
+        deathTimer = 0.0f;  // Запускаем таймер эффекта смерти
     }
     else {
-        setAnimation("hurt");
-        hitStartTime = SDL_GetTicks();
+        hitStartTime = SDL_GetTicks(); // момент получения урона
     }
 }
+
+
+
+
+
+void Enemy::initRectSize() {
+    switch (type) {
+    case EnemyType::Fox: rect.w = 96; rect.h = 64; break;
+    case EnemyType::Boar: rect.w = 96; rect.h = 64; break;
+    case EnemyType::Goat: rect.w = 96; rect.h = 64; break;
+    case EnemyType::Bird: rect.w = 48; rect.h = 36; break;
+    default: rect.w = 90; rect.h = 90; break;
+    }
+}
+
 
 SDL_FRect Enemy::getHitbox() const {
     return SDL_FRect{ rect.x, rect.y, rect.w * 1.2f, rect.h * 1.2f };
@@ -88,8 +141,10 @@ SDL_FRect Enemy::getRect() const {
 }
 
 bool Enemy::isMarkedForDeletion() const {
-    return isDead && currentAnim == "death" && currentFrame >= frameCounts.at("death") - 1;
+    return markedForDeletion;
 }
+
+
 
 void Enemy::render(SDL_Renderer* renderer, Camera* camera) {
     SDL_Texture* tex = textures[currentAnim];
@@ -104,18 +159,49 @@ void Enemy::render(SDL_Renderer* renderer, Camera* camera) {
 
     SDL_FRect screenRect = camera->apply(rect);
     SDL_FlipMode flip = facingRight ? SDL_FLIP_NONE : SDL_FLIP_HORIZONTAL;
+
+    Uint64 now = SDL_GetTicks();
+    bool recentlyHit = (now - hitStartTime) < 150;
+
+    // Эффект получения урона (покраснение)
+    if (recentlyHit) {
+        SDL_SetTextureColorMod(tex, 255, 100, 100);
+    }
+
+    // Прозрачность при смерти
+    if (isDead) {
+        SDL_SetTextureAlphaMod(tex, static_cast<Uint8>(deathAlpha));
+    }
+
     SDL_RenderTextureRotated(renderer, tex, &srcRect, &screenRect, 0.0, nullptr, flip);
+
+    // Сброс цвета и альфы
+    if (recentlyHit) {
+        SDL_SetTextureColorMod(tex, 255, 255, 255);
+    }
+    if (isDead) {
+        SDL_SetTextureAlphaMod(tex, 255);
+    }
 }
+
+
+
 
 void Enemy::update(float deltaTime, Player* player) {
     if (state == EnemyState::Dead) {
-        animationTimer += deltaTime;
-        if (animationTimer >= 0.15f) {
-            animationTimer = 0.0f;
-            currentFrame = std::min(currentFrame + 1, totalFrames - 1);
+        deathTimer += deltaTime;
+
+        // Плавное исчезновение (альфа от 255 до 0)
+        float fadeRate = 255.0f / deathDuration;  // например, исчезает за deathDuration секунд
+        deathAlpha -= fadeRate * deltaTime;
+        if (deathAlpha < 0.0f) deathAlpha = 0.0f;
+
+        if (deathTimer >= deathDuration) {
+            markedForDeletion = true;
         }
         return;
     }
+
 
     timeSinceLastAttack += deltaTime;
 
@@ -126,6 +212,7 @@ void Enemy::update(float deltaTime, Player* player) {
     float dy = playerPos.y - myPos.y;
     float distance = sqrtf(dx * dx + dy * dy);
 
+    // Распространение агрессии
     if (state == EnemyState::Aggro) {
         for (Enemy* other : Enemy::allEnemies) {
             if (other != this && !other->isDeadNow()) {
@@ -136,71 +223,139 @@ void Enemy::update(float deltaTime, Player* player) {
             }
         }
     }
-    
-    switch (state) {
-    case EnemyState::Idle:
-        setAnimation("idle");
-        if (distance < aggroRadius) {
-            suspicionTimer += deltaTime;
-            state = (suspicionTimer > suspicionThreshold) ? EnemyState::Aggro : EnemyState::Suspicious;
-        }
-        break;
 
-    case EnemyState::Suspicious:
-        setAnimation("idle");
-        if (distance < aggroRadius) {
-            suspicionTimer += deltaTime;
-            if (suspicionTimer >= suspicionThreshold) {
-                state = EnemyState::Aggro;
+    // Поведение по типу врага
+    switch (type) {
+    case EnemyType::Boar:
+        if (distance < boarAggroRadius) {
+            setAnimation("boar-walk");
+            boarChargeTimer += deltaTime;
+
+            if (boarChargeTimer > chargeDelay) {
+                setAnimation("boar-attack");
+                if (timeSinceLastAttack >= attackCooldown) {
+                    player->takeDamage(20);
+                    timeSinceLastAttack = 0.0f;
+                }
             }
         }
         else {
-            suspicionTimer = 0;
-            state = EnemyState::Idle;
+            setAnimation("boar-stand");
+            boarChargeTimer = 0.0f;
         }
         break;
 
-    case EnemyState::Aggro:
-        if (distance < 50.0f) {
-            setAnimation("attack");
-            if (timeSinceLastAttack >= attackCooldown) {
-                int damage = 12 + rand() % 4;
-                player->takeDamage(damage);
-                timeSinceLastAttack = 0.0f;
+    case EnemyType::Fox:
+        movementTimer += deltaTime;
+        if (movementTimer > movementDelay) {
+            patrolDirection *= -1.0f;
+            movementTimer = 0.0f;
+        }
+        rect.x += patrolDirection * speed * deltaTime;
+        facingRight = patrolDirection >= 0;
+        setAnimation("fox");
+        break;
+
+    case EnemyType::Goat:
+        movementTimer += deltaTime;
+        if (movementTimer > movementDelay) {
+            patrolDirection *= -1.0f;
+            movementTimer = 0.0f;
+        }
+        rect.x += patrolDirection * speed * deltaTime;
+        facingRight = patrolDirection >= 0;
+        setAnimation("goat_walk");
+        break;
+
+    case EnemyType::Bird:
+        movementTimer += deltaTime;
+        if (movementTimer > movementDelay) {
+            float direction = (rand() % 2 == 0) ? 1.0f : -1.0f;
+            rect.x += direction * speed * deltaTime;
+            facingRight = direction >= 0;
+            movementTimer = 0.0f;
+        }
+        setAnimation("bird_blue");
+        break;
+
+    default:
+        // Поведение по состоянию
+        switch (state) {
+        case EnemyState::Idle:
+            setAnimation("idle");
+            if (distance < aggroRadius) {
+                suspicionTimer += deltaTime;
+                state = (suspicionTimer > suspicionThreshold) ? EnemyState::Aggro : EnemyState::Suspicious;
             }
-        }
-        else {
-            setAnimation("walk");  // 🔧 ОБЯЗАТЕЛЬНО!
-            float dirX = dx / distance;
-            rect.x += dirX * speed * deltaTime;
-            facingRight = dirX >= 0;
+            break;
+
+        case EnemyState::Suspicious:
+            setAnimation("idle");
+            if (distance < aggroRadius) {
+                suspicionTimer += deltaTime;
+                if (suspicionTimer >= suspicionThreshold) {
+                    state = EnemyState::Aggro;
+                }
+            }
+            else {
+                suspicionTimer = 0;
+                state = EnemyState::Idle;
+            }
+            break;
+
+        case EnemyState::Aggro:
+            if (distance < 50.0f) {
+                setAnimation("attack");
+                if (timeSinceLastAttack >= attackCooldown) {
+                    int damage = 12 + rand() % 4;
+                    player->takeDamage(damage);
+                    timeSinceLastAttack = 0.0f;
+                }
+            }
+            else {
+                setAnimation("walk");
+                float dirX = dx / distance;
+                rect.x += dirX * speed * deltaTime;
+                facingRight = dirX >= 0;
+            }
+
+            if (distance > aggroRadius * 1.5f) {
+                state = EnemyState::Returning;
+            }
+            break;
+
+        case EnemyState::Returning: {
+            setAnimation("walk");
+            float dxBack = spawnPoint.x - rect.x;
+            float distBack = fabsf(dxBack);
+            if (distBack > 5.0f) {
+                float dirX = dxBack / distBack;
+                rect.x += dirX * speed * deltaTime;
+                facingRight = dirX >= 0;
+            }
+            else {
+                rect.x = spawnPoint.x;
+                state = EnemyState::Idle;
+            }
+            break;
         }
 
-        if (distance > aggroRadius * 1.5f) {
-            state = EnemyState::Returning;
+                                  break;
         }
-        break;
-
-    case EnemyState::Returning:
-        setAnimation("walk");
-        float dxBack = spawnPoint.x - rect.x;
-        float distBack = fabsf(dxBack);
-        if (distBack > 5.0f) {
-            float dirX = dxBack / distBack;
-            rect.x += dirX * speed * deltaTime;
-            facingRight = dirX >= 0;
-        }
-        else {
-            rect.x = spawnPoint.x;
-            state = EnemyState::Idle;
-        }
-        break;
     }
 
-    // 🔧 АНИМАЦИЯ ВСЕГДА ОБНОВЛЯЕТСЯ (кроме смерти)
+    // Анимация (кроме Dead)
     animationTimer += deltaTime;
     if (animationTimer >= 0.15f) {
         animationTimer = 0.0f;
         currentFrame = (currentFrame + 1) % totalFrames;
+    }
+
+    // Проверка на окончание эффекта краснения
+    if (isFlashingRed) {
+        Uint64 now = SDL_GetTicks();
+        if (now - flashStartTime > flashDuration) {
+            isFlashingRed = false;
+        }
     }
 }

@@ -39,8 +39,16 @@ SDL_AppResult Game::SDL_AppInit()
     SDL_FRect playerRect = player->getRect();
 
     // Создаем врагов
-    enemies.push_back(new Enemy(renderer, 600, 250));
-    enemies.push_back(new Enemy(renderer, 800, 250));
+ // Создаем врагов
+    enemies.push_back(new Enemy(renderer, 600, 250, EnemyType::Default));
+    enemies.push_back(new Enemy(renderer, 800, 250, EnemyType::Default));
+
+    enemies.push_back(new Enemy(renderer, 600, 250, EnemyType::Boar));
+    enemies.push_back(new Enemy(renderer, 600, 250, EnemyType::Fox));
+    enemies.push_back(new Enemy(renderer, 400, 250, EnemyType::Goat));
+    enemies.push_back(new Enemy(renderer, 1000, 250, EnemyType::Bird));
+
+
 
     // Передаем врагов игроку
     player->setEnemies(enemies);
