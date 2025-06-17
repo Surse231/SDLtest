@@ -1,9 +1,9 @@
-#include "FireballSkill.h"
+п»ї#include "FireballSkill.h"
 
 FireballSkill::FireballSkill()
     : active(false),
     fireballRect{ 0, 0, WIDTH, HEIGHT },
-    fireballSpeed(600.0f), // скорость пикселей в секунду
+    fireballSpeed(600.0f), // СЃРєРѕСЂРѕСЃС‚СЊ РїРёРєСЃРµР»РµР№ РІ СЃРµРєСѓРЅРґСѓ
     fireballDirection(1.0f)
 {
 }
@@ -17,25 +17,36 @@ void FireballSkill::activate(Player* player) {
     float fireballY = playerRect.y + (playerRect.h / 2) - (HEIGHT / 2);
 
     fireballRect = { fireballX, fireballY, WIDTH, HEIGHT };
-
     fireballDirection = player->isFlipped() ? -1.0f : 1.0f;
 
+    traveledDistance = 0.0f; // рџ”Ґ СЃР±СЂР°СЃС‹РІР°РµРј
     active = true;
 }
-int windowWidth = 800;  // или другое начальное значение
 
-void FireballSkill::update(Player* player, float deltaTime) {
+
+void FireballSkill::update(Player* player, float deltaTime)
+{
+    update(player, deltaTime, 5000.0f); // РёР»Рё РІРѕР·СЊРјРё real mapWidth РёР· player
+}
+
+void FireballSkill::update(Player* player, float deltaTime, float mapWidth)
+{
     if (!active) return;
 
-    fireballRect.x += fireballSpeed * fireballDirection * deltaTime;
+    float dx = fireballSpeed * fireballDirection * deltaTime;
+    fireballRect.x += dx;
 
-    // Здесь windowWidth — ширина окна, её нужно    получить извне (например, глобальная переменная или параметр)
-    extern int windowWidth;
+    traveledDistance += std::abs(dx);  // рџ”Ґ СЃСѓРјРјРёСЂСѓРµРј РґРёСЃС‚Р°РЅС†РёСЋ
 
-    if (fireballRect.x < 0 || fireballRect.x > windowWidth) {
+    // РџСЂРµРєСЂР°С‰Р°РµРј, РµСЃР»Рё РїСЂРѕР»РµС‚РµР»Рё СЃР»РёС€РєРѕРј РјРЅРѕРіРѕ
+    if (traveledDistance >= maxDistance || fireballRect.x < 0 || fireballRect.x > mapWidth) {
         active = false;
     }
 }
+
+
+
+
 
 void FireballSkill::render(SDL_Renderer* renderer, Camera* camera) {
     if (!active) return;

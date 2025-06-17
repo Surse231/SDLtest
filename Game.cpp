@@ -3,6 +3,10 @@
 #include <string>
 #include "FireballSkill.h"
 #include "SDL3_ttf/SDL_ttf.h"
+#include "TileMap.h"
+#include "Enemy.h"
+#include <cstdlib>
+#include <ctime>
 
 bool checkCollision(const SDL_FRect& a, const SDL_FRect& b) {
     return a.x < b.x + b.w && a.x + a.w > b.x &&
@@ -33,25 +37,40 @@ SDL_AppResult Game::SDL_AppInit()
     SDL_SetWindowFullscreen(window, SDL_WINDOW_FULLSCREEN);
 
     font = TTF_OpenFont("assets/fonts/Orbitron-VariableFont_wght.ttf", 32);
-    camera = new Camera(1920, 1080, 400, 200);
+    camera = new Camera(1920.0f, 1080.0f);
+
 
     player = new Player(renderer, font, camera);
     SDL_FRect playerRect = player->getRect();
 
+    tileMap = new TileMap(renderer);
+    tileMap->loadFromFile("assets/map/MEGATEST.json");
+
+ 
+    float groundY = tileMap->getSpawnPoint().y;
+
     // Создаем врагов
  // Создаем врагов
-    enemies.push_back(new Enemy(renderer, 600, 250, EnemyType::Default));
-    enemies.push_back(new Enemy(renderer, 800, 250, EnemyType::Default));
-
-    enemies.push_back(new Enemy(renderer, 600, 250, EnemyType::Boar));
-    enemies.push_back(new Enemy(renderer, 600, 250, EnemyType::Fox));
-    enemies.push_back(new Enemy(renderer, 400, 250, EnemyType::Goat));
-    enemies.push_back(new Enemy(renderer, 1000, 250, EnemyType::Bird));
+    enemies.push_back(new Enemy(renderer, 800.0f, 250.0f, EnemyType::Default));
+    enemies.push_back(new Enemy(renderer, 800.0f, 250.0f, EnemyType::Default));
 
 
+    // Game::SDL_AppInit()
+
+    enemies.push_back(new Enemy(renderer, 800.0f, 250.0f, EnemyType::Boar));
+    enemies.push_back(new Enemy(renderer, 800.0f, 250.0f, EnemyType::Fox));
+    enemies.push_back(new Enemy(renderer, 1200.0f, 230.0f, EnemyType::Bird));
+
+
+    for (Enemy* enemy : enemies) {
+        enemy->setCollisionRects(tileMap->getCollisionRects());
+    }
 
     // Передаем врагов игроку
     player->setEnemies(enemies);
+
+    player->setCollisions(tileMap->getCollisionRects());
+    player->setPosition(tileMap->getSpawnPoint().x, tileMap->getSpawnPoint().y);
 
     menu = new MainMenu(renderer, font, window);  // 🔧 добавлено
 
@@ -61,6 +80,7 @@ SDL_AppResult Game::SDL_AppInit()
             pow(playerRect.y - enemy->getRect().y, 2));
 
         enemy->setAggroState(distance < enemy->getAggroRadius());
+
 
     }
 
@@ -105,8 +125,17 @@ SDL_AppResult Game::SDL_AppIterate()
     SDL_SetRenderDrawColor(renderer, 30, 30, 30, 255);
     SDL_RenderClear(renderer);
 
+
+    tileMap->renderLayer(renderer, camera->getView(), u8"Tile Layer 1");
+    tileMap->renderLayer(renderer, camera->getView(), u8"Tile Layer 2");
+    tileMap->renderLayer(renderer, camera->getView(), u8"Tile Layer 3");
+    tileMap->renderLayer(renderer, camera->getView(), u8"Tile Layer 4");
+    tileMap->renderLayer(renderer, camera->getView(), u8"Tile Layer 5");
+    tileMap->renderLayer(renderer, camera->getView(), u8"Tile Layer 6");
+
     if (player->isDead()) {
         SDL_Color red = { 255, 0, 0, 255 };
+
 
         SDL_Surface* surface = TTF_RenderText_Blended(font, "GAME OVER", strlen("GAME OVER"), red);
 
@@ -134,6 +163,19 @@ SDL_AppResult Game::SDL_AppIterate()
         SDL_RenderPresent(renderer);
         SDL_Delay(100);
 
+        SDL_SetRenderDrawColor(renderer, 255, 255, 0, 100); // жёлтые прямоугольники
+        for (const auto& rect : tileMap->getCollisionRects()) {
+            SDL_FRect screen = camera->apply(rect);
+            SDL_RenderFillRect(renderer, &screen);
+        }
+        for (Enemy* enemy : enemies) {
+            enemy->setCollisionRects(tileMap->getCollisionRects());
+        }
+
+
+        player->otrisovka();
+        player->obnovleniepersa();
+
         return SDL_APP_CONTINUE;
     }
 
@@ -142,7 +184,8 @@ SDL_AppResult Game::SDL_AppIterate()
         menu->render();
     }
     else {
-        camera->update(player->getDest());
+        camera->update(player->getDest(), tileMap->getMapWidth(), tileMap->getMapHeight());
+
 
         player->otrisovka();
         player->obnovleniepersa();
@@ -185,6 +228,8 @@ SDL_AppResult Game::SDL_AppIterate()
                 ++it;
             }
         }
+        player->renderInventory();
+
     }
 
     SDL_RenderPresent(renderer);

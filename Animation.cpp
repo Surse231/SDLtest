@@ -6,7 +6,8 @@ Animation::~Animation() {}
 void Animation::update(const AnimationSet& anim, SDL_FRect& src, int frameWidth, bool loop) {
     frameCount = anim.frameCount;  // ќЅя«ј“≈Ћ№Ќќ обновл€ть frameCount дл€ корректной работы
 
-    Uint64 now = SDL_GetTicks();
+    Uint32 now = SDL_GetTicks();
+
     if (lastUpdate == 0) {
         lastUpdate = now;
         return; // первый вызов Ч не двигаем кадры

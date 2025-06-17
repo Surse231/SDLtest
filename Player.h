@@ -10,9 +10,9 @@
 #include "Camera.h"
 #include "Skill.h"
 #include "SkillHUD.h"
+#include "Inventory.h"
 
 class Enemy;
-
 
 class Player {
 public:
@@ -23,7 +23,6 @@ public:
     void obrabotkaklavish(SDL_Event* event);
     void obnovleniepersa();
     void otrisovka();
-
 
     void setPosition(float x, float y);
     void setCollisions(const std::vector<SDL_FRect>& rects);
@@ -43,6 +42,9 @@ public:
     int getDirection() const { return isFlipped() ? -1 : 1; }
     int getCurrentAttackFrame() const { return animationHandler.getCurrentFrame(); }
 
+    void updateInventory();
+    void renderInventory();
+
     const std::vector<Skill*>& getSkills() const {
         return skills;
     }
@@ -57,14 +59,25 @@ public:
 
     bool isDead() const { return currentHealth <= 0; }
     int getHealth() const { return currentHealth; }
+    void setDest(const SDL_FRect& d);
+    void setMapWidth(float width) { mapWidth = width; }
+
+    bool isInventoryOpen() const { return inventoryOpen; }
+    Inventory* getInventory() const { return inventory; }
 
 private:
+
+    bool inventoryTogglePressed = false;
+    bool inventoryOpen = false;
+    Inventory* inventory;
+
     std::map<std::string, AnimationSet> animations;
     std::string currentAnim = "idle";
     std::vector<Enemy*> enemies;
     std::vector<Skill*> skills;
     std::vector<SDL_FRect> collisionRects;
 
+    void updateHitbox();
     void defineLook(const bool* keys);
     void attackHandler();
     void moveHandler(const bool* keys);
@@ -75,6 +88,7 @@ private:
     Interface* interface;
     Camera* camera;
 
+    float mapWidth = 50000.0f;
 
     SkillHUD* skillHUD;
 
@@ -87,11 +101,18 @@ private:
     SDL_FRect dest;
     SDL_FlipMode flip;
 
-    int previousFrame = -1; // Добавь это в private-секцию Player
+    int previousFrame = -1;
     int speed;
     int currentHealth;
     int TotalHealth;
     int money = 0;
+
+    SDL_FRect hitbox{};
+    float oldX = 0.0f;
+    bool isOnGround = false;
+    float velocityY = 0.0f;
+    float gravity = 1.0f;
+    float sila_prizhka = -15.0f;
 
     bool currentLoop = true;
     bool isWalk = false;
@@ -101,10 +122,6 @@ private:
     bool damageDone = false;
     bool hasDealtDamage = false;
 
-    int velocityY = 0;
-    static const int gravity = 1;
-    static const int sila_prizhka = -15;    
-
     bool isSkillActive = false;
 
     Uint64 lastDashTime = 0;
@@ -112,5 +129,4 @@ private:
 
     Uint32 lastAttackTime = 0;
     const Uint32 attackCooldown = 300;
-
 };

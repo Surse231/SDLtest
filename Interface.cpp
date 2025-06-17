@@ -1,34 +1,32 @@
 #include "Interface.h"
-#include "Structs.h"
-#include "SDL3/SDL.h"
-Interface::Interface(SDL_Renderer* renderer, TTF_Font* font, int currentHealth, int TotalHealth) : renderer(renderer), font(font)
+
+Interface::Interface(SDL_Renderer* renderer, TTF_Font* font, int currentHealth, int TotalHealth)
+    : renderer(renderer), font(font)
 {
-    playerMoneyHUD = new  PlayerMoneyHUD(renderer, font);
-    playerHealthHUD = new  PlayerHealthHUD(renderer, font, currentHealth, TotalHealth);
+    playerMoneyHUD = new PlayerMoneyHUD(renderer, font);
+    playerHealthHUD = new PlayerHealthHUD(renderer, font, currentHealth, TotalHealth);
 }
 
-Interface::~Interface()
-{
-  
+Interface::~Interface() {
+    TTF_CloseFont(font);
+    delete playerMoneyHUD;
+    delete playerHealthHUD;
 }
 
-void Interface::obnovlenieHUD()
-{
+void Interface::setHealth(int hp) {
+    playerHealthHUD->setHealth(hp);
+}
+
+void Interface::setMoney(int money) {
+    playerMoneyHUD->setMoney(money);
+}
+
+void Interface::obnovlenieHUD() {
     playerMoneyHUD->obnovlenieHUD();
     playerHealthHUD->obnovlenieHUD();
 }
 
-
-void Interface::otrisovka()const
-{
-   
-}
-
-void Interface::setMoney(int newMoney)
-{
-    playerMoneyHUD->setMoney(newMoney);
-}
-
-void Interface::changeMoney()
-{
+void Interface::otrisovka() const {
+    playerMoneyHUD->otrisovka();
+    playerHealthHUD->otrisovka();
 }

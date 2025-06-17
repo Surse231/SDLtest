@@ -27,7 +27,8 @@ void DashSkill::update(Player* player, float deltaTime) {
 
     SDL_FRect dest = player->getDest();
     dest.x += dx;
-    player->setPosition(dest.x, dest.y);
+    player->setDest(dest); // новый метод, просто устанавливает dest без сдвига по y
+
 
     if (dashTime >= (dashDuration / 1000.0f)) {  // тоже нужно перевести в секунды
         isDashing = false;

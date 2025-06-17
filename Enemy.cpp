@@ -54,7 +54,6 @@ Enemy::Enemy(SDL_Renderer* renderer, float x, float y, EnemyType type)
 
     initRectSize();
 
-
     setAnimation("idle");
 }
 
@@ -73,19 +72,12 @@ void Enemy::setAnimation(const std::string& anim) {
     if (!textures.count(anim) || !textures[anim]) return;
     if (currentAnim == anim && totalFrames > 1) return;
 
-
     currentAnim = anim;
     if (frameCounts.count(anim) == 0) return;
     totalFrames = frameCounts[anim];
-
 
     SDL_Texture* tex = textures[anim];
     if (!tex) return;
-
-    currentAnim = anim;
-
-    if (frameCounts.count(anim) == 0) return;
-    totalFrames = frameCounts[anim];
 
     float w = 0.0f, h = 0.0f;
     SDL_GetTextureSize(tex, &w, &h);
@@ -108,18 +100,12 @@ void Enemy::takeDamage(int amount) {
         isDead = true;
         state = EnemyState::Dead;
 
-        // Не вызываем setAnimation("death")
-
         deathTimer = 0.0f;  // Запускаем таймер эффекта смерти
     }
     else {
         hitStartTime = SDL_GetTicks(); // момент получения урона
     }
 }
-
-
-
-
 
 void Enemy::initRectSize() {
     switch (type) {
@@ -131,6 +117,9 @@ void Enemy::initRectSize() {
     }
 }
 
+void Enemy::setCollisionRects(const std::vector<SDL_FRect>& rects) {
+    collisionRects = rects;
+}
 
 SDL_FRect Enemy::getHitbox() const {
     return SDL_FRect{ rect.x, rect.y, rect.w * 1.2f, rect.h * 1.2f };
@@ -144,7 +133,10 @@ bool Enemy::isMarkedForDeletion() const {
     return markedForDeletion;
 }
 
-
+void Enemy::setPosition(float x, float y) {
+    rect.x = x;
+    rect.y = y;
+}
 
 void Enemy::render(SDL_Renderer* renderer, Camera* camera) {
     SDL_Texture* tex = textures[currentAnim];
@@ -184,24 +176,15 @@ void Enemy::render(SDL_Renderer* renderer, Camera* camera) {
     }
 }
 
-
-
-
 void Enemy::update(float deltaTime, Player* player) {
     if (state == EnemyState::Dead) {
         deathTimer += deltaTime;
-
-        // Плавное исчезновение (альфа от 255 до 0)
-        float fadeRate = 255.0f / deathDuration;  // например, исчезает за deathDuration секунд
+        float fadeRate = 255.0f / deathDuration;
         deathAlpha -= fadeRate * deltaTime;
         if (deathAlpha < 0.0f) deathAlpha = 0.0f;
-
-        if (deathTimer >= deathDuration) {
-            markedForDeletion = true;
-        }
+        if (deathTimer >= deathDuration) markedForDeletion = true;
         return;
     }
-
 
     timeSinceLastAttack += deltaTime;
 
@@ -212,7 +195,6 @@ void Enemy::update(float deltaTime, Player* player) {
     float dy = playerPos.y - myPos.y;
     float distance = sqrtf(dx * dx + dy * dy);
 
-    // Распространение агрессии
     if (state == EnemyState::Aggro) {
         for (Enemy* other : Enemy::allEnemies) {
             if (other != this && !other->isDeadNow()) {
@@ -224,13 +206,12 @@ void Enemy::update(float deltaTime, Player* player) {
         }
     }
 
-    // Поведение по типу врага
+    // ======= Движение по X и анимации =======
     switch (type) {
     case EnemyType::Boar:
         if (distance < boarAggroRadius) {
             setAnimation("boar-walk");
             boarChargeTimer += deltaTime;
-
             if (boarChargeTimer > chargeDelay) {
                 setAnimation("boar-attack");
                 if (timeSinceLastAttack >= attackCooldown) {
@@ -251,21 +232,39 @@ void Enemy::update(float deltaTime, Player* player) {
             patrolDirection *= -1.0f;
             movementTimer = 0.0f;
         }
-        rect.x += patrolDirection * speed * deltaTime;
+        {
+            float moveX = patrolDirection * speed * deltaTime;
+            rect.x += moveX;
+            for (const auto& wall : collisionRects) {
+                if (SDL_HasRectIntersectionFloat(&rect, &wall)) {
+                    rect.x -= moveX;
+                    patrolDirection *= -1.0f;
+                    break;
+                }
+            }
+        }
         facingRight = patrolDirection >= 0;
         setAnimation("fox");
         break;
 
-    case EnemyType::Goat:
+    case EnemyType::Goat: {
         movementTimer += deltaTime;
         if (movementTimer > movementDelay) {
             patrolDirection *= -1.0f;
             movementTimer = 0.0f;
         }
-        rect.x += patrolDirection * speed * deltaTime;
+        float moveX = patrolDirection * speed * deltaTime;
+        rect.x += moveX;
+        for (const auto& wall : collisionRects) {
+            if (SDL_HasRectIntersectionFloat(&rect, &wall)) {
+                rect.x -= moveX;
+                break;
+            }
+        }
         facingRight = patrolDirection >= 0;
         setAnimation("goat_walk");
         break;
+    }
 
     case EnemyType::Bird:
         movementTimer += deltaTime;
@@ -279,7 +278,6 @@ void Enemy::update(float deltaTime, Player* player) {
         break;
 
     default:
-        // Поведение по состоянию
         switch (state) {
         case EnemyState::Idle:
             setAnimation("idle");
@@ -318,7 +316,6 @@ void Enemy::update(float deltaTime, Player* player) {
                 rect.x += dirX * speed * deltaTime;
                 facingRight = dirX >= 0;
             }
-
             if (distance > aggroRadius * 1.5f) {
                 state = EnemyState::Returning;
             }
@@ -339,19 +336,39 @@ void Enemy::update(float deltaTime, Player* player) {
             }
             break;
         }
+        }
+        break;
+    }
 
-                                  break;
+    // ======= Гравитация и столкновения по Y =======
+    velocityY += gravity;
+    rect.y += velocityY;
+    isOnGround = false;
+
+    for (const auto& wall : collisionRects) {
+        SDL_FRect intersection;
+        if (SDL_GetRectIntersectionFloat(&rect, &wall, &intersection)) {
+            if (velocityY > 0) {
+                rect.y = wall.y - rect.h;
+                velocityY = 0;
+                isOnGround = true;
+            }
+            else if (velocityY < 0) {
+                rect.y = wall.y + wall.h;
+                velocityY = 0;
+            }
+            break;
         }
     }
 
-    // Анимация (кроме Dead)
+
+    // ======= Анимация =======
     animationTimer += deltaTime;
     if (animationTimer >= 0.15f) {
         animationTimer = 0.0f;
         currentFrame = (currentFrame + 1) % totalFrames;
     }
 
-    // Проверка на окончание эффекта краснения
     if (isFlashingRed) {
         Uint64 now = SDL_GetTicks();
         if (now - flashStartTime > flashDuration) {

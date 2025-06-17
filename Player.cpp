@@ -5,63 +5,55 @@
     #include <SDL3/SDL_keyboard.h>
     #include "DashSkill.h"          
     #include "FireballSkill.h"
-    //#include "SunBeamSkill.h"
     #include "Enemy.h"  // если класс называется Ennemy, тогда "Ennemy.h"
-#include <iostream> 
-#include <fstream>
+    #include <iostream> 
+    #include <fstream>
 
+Player::Player(SDL_Renderer* renderer, TTF_Font* font, Camera* camera)
+    : renderer(renderer), font(font), camera(camera),
+    inventoryOpen(false), inventory(new Inventory(renderer)),
+    dashIconTexture(nullptr), animationHandler(),
+    speed(5), currentHealth(100), TotalHealth(100),
+    money(0), flip(SDL_FLIP_NONE),
+    oldX(0), velocityY(0), gravity(1.0f), sila_prizhka(-15.0f),
+    currentLoop(true), isWalk(false), isAttack(false),
+    isjump(false), isRunning(false), hasDealtDamage(false),
+    isSkillActive(false), lastDashTime(0), lastAttackTime(0)
+    
+{
+    initAnimations();
+    src = { 0, 0, 48, 48 };
+    dest = { 400.0f, 300.0f, 64.0f, 64.0f };
+    rect = dest;
 
+    interface = new Interface(renderer, font, currentHealth, TotalHealth);
+    skillHUD = new SkillHUD(renderer);
 
+    inventory->addItem("Topor", "assets/MoiInventory/Topor.png");
+    inventory->addItem("eda", "assets/MoiInventory/eda.png");
 
-
-    Player::Player(SDL_Renderer* renderer, TTF_Font* font, Camera* camera)
-        : renderer(renderer), font(font), camera(camera)
-    {
-        initAnimations();
-        src = { 0, 0, 48, 48 };
-        dest = { 200, 250, 96, 96 }; // Вернули персонажа выше
-        rect = { 400.0f, 300.0f, 64.0f, 64.0f };
-
-        speed = 5;
-        currentHealth = 10000000;
-        TotalHealth = 100;
-        interface = new Interface(renderer, font, currentHealth, TotalHealth);
-        skillHUD = new SkillHUD(renderer);
-
-        dashIconTexture = IMG_LoadTexture(renderer, "assets/icons/dash.png");
-        if (dashIconTexture) {
-            skillHUD->addSkillIcon(dashIconTexture, "Dash");
-            skills.push_back(new DashSkill());
-        }
-
-        SDL_Texture* fireIcon = IMG_LoadTexture(renderer, "assets/icons/fireball.png");
-        if (fireIcon) {
-            skillHUD->addSkillIcon(fireIcon, "Fireball");
-            skills.push_back(new FireballSkill());
-        }
-
-        /*SDL_Texture* sunBeamIcon = IMG_LoadTexture(renderer, "assets/icons/sunbeam.png");
-        if (sunBeamIcon) {
-            skillHUD->addSkillIcon(sunBeamIcon, "SunBeam");
-            skills.push_back(new SunBeamSkill());
-        }*/
-
-
+    dashIconTexture = IMG_LoadTexture(renderer, "assets/icons/dash.png");
+    if (dashIconTexture) {
+        skillHUD->addSkillIcon(dashIconTexture, "Dash");
+        skills.push_back(new DashSkill());
     }
 
-    Player::~Player() {
-        if (dashIconTexture) {
-            SDL_DestroyTexture(dashIconTexture);
-        }
-
-        delete interface;
-        delete skillHUD;
-        for (Skill* skill : skills) {
-            delete skill;
-        }
-        skills.clear();
-
+    SDL_Texture* fireIcon = IMG_LoadTexture(renderer, "assets/icons/fireball.png");
+    if (fireIcon) {
+        skillHUD->addSkillIcon(fireIcon, "Fireball");
+        skills.push_back(new FireballSkill());
     }
+}
+
+
+Player::~Player() {
+    delete interface;
+    delete skillHUD;
+    for (auto s : skills) delete s;
+    delete inventory;
+    if (dashIconTexture) SDL_DestroyTexture(dashIconTexture);
+}
+
 
     void Player::initAnimations() {
         SDL_Texture* tex = nullptr;
@@ -107,7 +99,9 @@
         // Прямоугольник здоровья
         SDL_FRect hpBg = { dest.x, dest.y - 20, 100, 10 };
         SDL_FRect hpBar = { dest.x, dest.y - 20, currentHealth, 10 };
-
+        if (inventoryOpen) {
+            inventory->render();
+        }
         SDL_SetRenderDrawColor(renderer, 80, 80, 80, 255);
         SDL_RenderFillRect(renderer, &hpBg);
 
@@ -128,12 +122,22 @@
         for (Skill* skill : skills) {
             skill->render(renderer, camera);
         }
+
+        // Хитбокс — красный прямоугольник
+        SDL_SetRenderDrawColor(renderer, 255, 0, 0, 120);
+        SDL_FRect screenHitbox = camera->apply(hitbox);
+        SDL_RenderRect(renderer, &screenHitbox);
     }
 
     void Player::setEnemies(const std::vector<Enemy*>& enemiesList) {
         enemies = enemiesList;
     }   
 
+    void Player::renderInventory() {
+        if (inventoryOpen && inventory) {
+            inventory->render();
+        }
+    }
 
 
     void Player::setAnimation(const std::string& animName, bool loop) {
@@ -159,6 +163,22 @@
         interface->setMoney(money);
     }
     
+
+    void Player::updateHitbox() {
+        hitbox.w = dest.w - 50.0f;
+        hitbox.h = dest.h - 25.0f;
+
+        hitbox.y = dest.y + 25.1f - 1.f; // 🔥 смещение вверх на 1 пиксель, чтобы не цепляться за пол
+
+        // Легкий сдвиг в сторону в зависимости от направления, но с запасом
+        hitbox.x = (flip == SDL_FLIP_HORIZONTAL)
+            ? dest.x + 30.0f
+            : dest.x + 18.0f;
+    }
+
+
+
+
 
     void Player::defineLook(const bool* keys) {
         if (keys[SDL_SCANCODE_A]) {
@@ -210,60 +230,96 @@
         }
     }
 
+   
 
 
-
-
-
+    void Player::updateInventory() {
+        if (inventoryOpen && inventory) {
+            // Например:
+            SDL_Event e;
+            while (SDL_PollEvent(&e)) {
+                inventory->handleEvent(&e);
+            }
+        }
+    }
 
     void Player::moveHandler(const bool* keys) {
         isWalk = false;
         isRunning = false;
 
-        // Определяем направление и состояние
-        if (keys[SDL_SCANCODE_A]) {
-            flip = SDL_FLIP_HORIZONTAL;
-            isWalk = true;
-        }
-        else if (keys[SDL_SCANCODE_D]) {
-            flip = SDL_FLIP_NONE;
-            isWalk = true;
-        }
-
-        // Прыжок
-        if (keys[SDL_SCANCODE_SPACE] && !isjump) {
-            velocityY = sila_prizhka;
-            isjump = true;
-        }
-
-        if (isjump) {
-            dest.y += velocityY;
-            velocityY += gravity;
-            if (dest.y >= 250) {
-                dest.y = 250;
-                isjump = false;
-                velocityY = 0;
-            }
-        }
+        oldX = dest.x;
+        float oldY = dest.y;
 
         int actualSpeed = speed;
         if (keys[SDL_SCANCODE_LSHIFT]) {
             isRunning = true;
-            actualSpeed = speed * 2;
+            actualSpeed *= 2;
         }
+
+        // === Движение по X ===
+        float dx = 0.0f;
 
         if (keys[SDL_SCANCODE_A]) {
-            dest.x -= actualSpeed;
+            dx = -actualSpeed;
+            flip = SDL_FLIP_HORIZONTAL;
+            isWalk = true;
         }
         if (keys[SDL_SCANCODE_D]) {
-            dest.x += actualSpeed;
+            dx = actualSpeed;
+            flip = SDL_FLIP_NONE;
+            isWalk = true;
         }
 
-        // Устанавливаем анимацию в зависимости от состояния
-        if (isAttack) {
-            // Не меняем анимацию при атаке, она будет обновляться отдельно
+        dest.x += dx;
+        updateHitbox();
+
+        for (const auto& rect : collisionRects) {
+            if (SDL_HasRectIntersectionFloat(&hitbox, &rect)) {
+                dest.x -= dx;  // откат на тот же шаг, не на старую позицию
+                updateHitbox();
+                break;
+            }
         }
-        else if (isjump) {
+
+       
+
+        // === Движение по Y ===
+        dest.y += velocityY;
+        velocityY += gravity;
+        updateHitbox();
+
+        // === Проверка коллизий по Y ===
+        for (const auto& rect : collisionRects) {
+            if (SDL_HasRectIntersectionFloat(&hitbox, &rect)) {
+                if (hitbox.y + hitbox.h > rect.y && hitbox.y < rect.y && velocityY >= 0) {
+                    dest.y = rect.y - dest.h;
+                    velocityY = 0;
+                    isjump = false;
+                    isOnGround = true;
+                }
+                else if (velocityY < 0 && hitbox.y - velocityY >= rect.y + rect.h) {
+                    // Сверху ударились
+                    dest.y = rect.y + rect.h;
+                    velocityY = 0;
+                }
+                updateHitbox();
+                break;
+            }
+        }
+
+        // === Прыжок ===
+        if (keys[SDL_SCANCODE_SPACE] && isOnGround) {
+            velocityY = sila_prizhka;
+            isjump = true;
+            isOnGround = false; // сбрасываем после прыжка
+        }
+
+
+        // === Анимации ===
+        if (isAttack) {
+            // не трогаем
+        }
+        else if (!isOnGround || isjump) {
             setAnimation("jump", true);
         }
         else if (isWalk) {
@@ -272,14 +328,18 @@
         else {
             setAnimation("idle", true);
         }
+        updateHitbox();
     }
+
 
 
 
     void Player::setPosition(float x, float y) {
-        dest.x = x;
-        dest.y = y;
+        dest.x = x - dest.w / 2;  // по центру
+        dest.y = y - dest.h;      // над тайлом
+        updateHitbox();
     }
+
     void Player::setCollisions(const std::vector<SDL_FRect>& rects) {
         collisionRects = rects;
     }
@@ -334,8 +394,16 @@
 
         attackHandler();
 
-        for (Skill* skill : skills)
-            skill->update(this, deltaTime);
+        for (Skill* skill : skills) {
+            FireballSkill* fire = dynamic_cast<FireballSkill*>(skill);
+            if (fire) {
+                fire->update(this, deltaTime, mapWidth);
+            }
+            else {
+                skill->update(this, deltaTime);
+            }
+        }
+
 
         rect = dest;  // чтобы getRect() возвращал актуальные координаты
 
@@ -359,6 +427,12 @@
         if (currentHealth <= 0) return;
         currentHealth -= amount;
         if (currentHealth < 0) currentHealth = 0;
+    }
+
+    void Player::setDest(const SDL_FRect& d)
+    {
+        dest = d;
+        updateHitbox();
     }
 
 
@@ -386,6 +460,35 @@
                 hasDealtDamage = false; // <<< ВАЖНО!
             }
         }
+
+        if (inventoryOpen) {
+            inventory->handleEvent(event);  // Перетаскивание работает
+        }
+
+        if (event->type == SDL_EVENT_MOUSE_BUTTON_DOWN && event->button.button == SDL_BUTTON_LEFT) {
+            if (!inventoryOpen) { // 🚫 Не атакуем, если инвентарь открыт
+                isAttack = true;
+                animationHandler.reset();
+            }
+        }
+        if (event->type == SDL_EVENT_MOUSE_BUTTON_UP && event->button.button == SDL_BUTTON_LEFT) {
+            isAttack = false;
+            currentAnim = "idle";
+        }
+        // ✅ Переключение инвентаря по клавише I
+        if (event->type == SDL_EVENT_KEY_DOWN && event->key.key == SDLK_I) {
+            if (!inventoryTogglePressed) {
+                inventoryOpen = !inventoryOpen;
+                inventoryTogglePressed = true;
+                std::cout << "📦 Inventory status: " << (inventoryOpen ? "OPEN" : "CLOSED") << std::endl;
+            }
+        }
+
+        if (event->type == SDL_EVENT_KEY_UP && event->key.key == SDLK_I) {
+            inventoryTogglePressed = false;
+        }
+
+
 
 
         if (event->type == SDL_EVENT_KEY_DOWN && event->key.key == SDLK_Q) {

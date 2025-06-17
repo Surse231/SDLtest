@@ -7,6 +7,7 @@
 #include "Camera.h"
 #include "TileMap.h"
 #include "Enemy.h"   // заменили Dummy на Enemy
+#include "TileMap.h"
 
 class Game
 {
@@ -29,6 +30,8 @@ private:
     TTF_Font* font = nullptr;
     MainMenu* menu = nullptr;
     Camera* camera = nullptr;
+
+    TileMap* tileMap = nullptr;
 
     std::vector<Enemy*> enemies;  // вместо одного dummy Ч вектор врагов
 
