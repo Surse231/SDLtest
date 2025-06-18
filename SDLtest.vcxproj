@@ -152,6 +152,7 @@
     <ClCompile Include="Inventory.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="MainMenu.cpp" />
+    <ClCompile Include="NPC.cpp" />
     <ClCompile Include="Player.cpp" />
     <ClCompile Include="PlayerHealthHUD.cpp" />
     <ClCompile Include="PlayerMoneyHUD.cpp" />
@@ -172,6 +173,7 @@
     <ClInclude Include="Inventory.h" />
     <ClInclude Include="Item.h" />
     <ClInclude Include="MainMenu.h" />
+    <ClInclude Include="NPC.h" />
     <ClInclude Include="Player.h" />
     <ClInclude Include="PlayerHealthHUD.h" />
     <ClInclude Include="PlayerMoneyHUD.h" />

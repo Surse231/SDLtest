@@ -151,10 +151,6 @@ void Inventory::handleEvent(SDL_Event* event) {
     SDL_GetMouseState(&mx_int, &my_int);
     float mx = static_cast<float>(mx_int);
     float my = static_cast<float>(my_int);
-
-
-
-
     if (event->type == SDL_EVENT_MOUSE_BUTTON_DOWN && event->button.button == SDL_BUTTON_LEFT) {
         if (!draggingItem) {
             // Попытка взять предмет
@@ -197,23 +193,24 @@ void Inventory::handleEvent(SDL_Event* event) {
             }
 
             if (closestSlot != nullptr) {
-                // Проверяем, чтобы не положить предмет в previewRect
+                // Проверяем, чтобы не положить предмет в previewRect и чтобы слот не был занят
                 if (!(closestSlot->x == previewRect.x &&
                     closestSlot->y == previewRect.y &&
                     closestSlot->w == previewRect.w &&
-                    closestSlot->h == previewRect.h)) {
-
+                    closestSlot->h == previewRect.h)
+                    && !slotOccupied)
+                {
                     draggingItem->rect.x = closestSlot->x;
                     draggingItem->rect.y = closestSlot->y;
                 }
                 else {
+                    // Если слот занят или это previewRect, возвращаем предмет обратно
                     draggingItem->rect = draggingItemOriginalRect;
                 }
             }
             else {
                 draggingItem->rect = draggingItemOriginalRect;
             }
-
 
             draggingItem = nullptr; // отпускаем предмет
         }

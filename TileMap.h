@@ -32,6 +32,9 @@ public:
     const std::vector<Chest>& getChests() const { return chests; }
     std::vector<Chest>& getChestsMutable() { return chests; } // если нужен доступ для изменений
 
+    int getTileWidth() const { return tileWidth; }
+    int getTileHeight() const { return tileHeight; }
+
 private:
 
     SDL_FPoint spawnPoint{ 0, 0 };

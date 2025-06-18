@@ -68,6 +68,12 @@ public:
 
 private:
 
+    // В private секции
+    Uint64 lastDamageTime = 0;
+    Uint64 lastHealTick = 0;
+    bool canRegen = false;
+
+
     bool inventoryTogglePressed = false;
     bool inventoryOpen = false;
     Inventory* inventory;

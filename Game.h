@@ -1,13 +1,26 @@
-#pragma once
+п»ї#pragma once
 #include <SDL3/SDL.h>
 #include <SDL3_ttf/SDL_ttf.h>
-#include <vector>  // добавь для вектора
+#include <vector>  // РґРѕР±Р°РІСЊ РґР»СЏ РІРµРєС‚РѕСЂР°
 #include "Player.h"
 #include "MainMenu.h"
 #include "Camera.h"
 #include "TileMap.h"
-#include "Enemy.h"   // заменили Dummy на Enemy
+#include "Enemy.h"   // Р·Р°РјРµРЅРёР»Рё Dummy РЅР° Enemy
 #include "TileMap.h"
+
+struct FloatingText {
+    std::string text;
+    SDL_FPoint position;
+    Uint64 startTime;    // ГЁГ§Г¬ГҐГ­ГЁГІГј Г± Uint32 Г­Г  Uint64
+    Uint32 duration;     // Г¬Г®Г¦Г­Г® Г®Г±ГІГ ГўГЁГІГј Uint32
+
+    FloatingText(const std::string& t, SDL_FPoint pos, Uint64 start, Uint32 dur)
+        : text(t), position(pos), startTime(start), duration(dur) {
+    }
+};
+
+extern std::vector<FloatingText> floatingTexts;
 
 class Game
 {
@@ -33,7 +46,7 @@ private:
 
     TileMap* tileMap = nullptr;
 
-    std::vector<Enemy*> enemies;  // вместо одного dummy — вектор врагов
+    std::vector<Enemy*> enemies;  // РІРјРµСЃС‚Рѕ РѕРґРЅРѕРіРѕ dummy вЂ” РІРµРєС‚РѕСЂ РІСЂР°РіРѕРІ
 
     SDL_FRect getWindowSize();
 };

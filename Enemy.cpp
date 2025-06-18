@@ -12,8 +12,7 @@ static float distanceBetween(const SDL_FRect& a, const SDL_FRect& b) {
 }
 
 Enemy::Enemy(SDL_Renderer* renderer, float x, float y, EnemyType type)
-    : renderer(renderer), health(100), maxHealth(100), type(type)
-{
+    : renderer(renderer), health(100), maxHealth(100), type(type) {
     spawnPoint = { x, y };
     rect = { x, y, 90, 90 };
     allEnemies.push_back(this);
@@ -28,12 +27,7 @@ Enemy::Enemy(SDL_Renderer* renderer, float x, float y, EnemyType type)
     loadTexture("walk", "assets/1 Enemies/2/walk.png");
     loadTexture("attack", "assets/1 Enemies/2/attack.png");
     loadTexture("death", "assets/1 Enemies/2/death.png");
-    loadTexture("fox", "assets/1 Enemies/animals/fox-SWEN-bright.png");
-    loadTexture("boar-walk", "assets/1 Enemies/animals/Boar Walk.png");
-    loadTexture("boar-stand", "assets/1 Enemies/animals/Boar Stand.png");
-    loadTexture("boar-attack", "assets/1 Enemies/animals/Boar Attack.png");
-    loadTexture("goat_walk", "assets/1 Enemies/animals/goat_walk.png");
-    loadTexture("bird_blue", "assets/1 Enemies/animals/bird_2_blue.png");
+    loadTexture("hurt", "assets/1 Enemies/2/hurt.png");
 
     initRectSize();
     setAnimation("idle");
@@ -51,43 +45,58 @@ void Enemy::setAggroState(bool state) {
 }
 
 void Enemy::setAnimation(const std::string& anim) {
-    if (!textures.count(anim) || !textures[anim]) return;
+    if (!textures.count(anim) || !textures[anim]) {
+        std::cerr << "Texture for animation '" << anim << "' not found!\n";
+        return;
+    }
+
     if (currentAnim == anim && totalFrames > 1) return;
     currentAnim = anim;
-    if (frameCounts.count(anim) == 0) return;
-    totalFrames = frameCounts[anim];
 
+    if (frameCounts.count(anim) == 0) {
+        std::cerr << "Frame count for animation '" << anim << "' not found!\n";
+        return;
+    }
+
+    totalFrames = frameCounts[anim];
     SDL_Texture* tex = textures[anim];
-    float w = 0.0f, h = 0.0f;
+
+    float w = 0, h = 0;
     SDL_GetTextureSize(tex, &w, &h);
-    frameWidth = static_cast<int>(w) / totalFrames;
-    frameHeight = static_cast<int>(h);
+
+    if (w == 0 || totalFrames == 0) {
+        std::cerr << "Invalid texture size or frame count for '" << anim << "'\n";
+    }
+
+    frameWidth = w / totalFrames;
+    frameHeight = h;
+
     currentFrame = 0;
     animationTimer = 0.0f;
 }
 
+
 void Enemy::takeDamage(int amount) {
     if (isDead) return;
     health -= amount;
-    if (health <= 0) {
+    if (health > 0) {
+        isHurt = true;
+        hurtTimer = 0.0f;
+        setAnimation("hurt");
+    }
+
+    else {
         health = 0;
         isDead = true;
         state = EnemyState::Dead;
         deathTimer = 0.0f;
+        setAnimation("death");
     }
 }
 
 void Enemy::initRectSize() {
-    switch (type) {
-    case EnemyType::Fox:
-    case EnemyType::Boar:
-    case EnemyType::Goat:
-        rect.w = 96; rect.h = 64; break;
-    case EnemyType::Bird:
-        rect.w = 48; rect.h = 36; break;
-    default:
-        rect.w = 70; rect.h = 70; break;
-    }
+    rect.w = 70;
+    rect.h = 70;
 }
 
 void Enemy::setCollisionRects(const std::vector<SDL_FRect>& rects) {
@@ -128,7 +137,16 @@ void Enemy::render(SDL_Renderer* renderer, Camera* camera) {
         SDL_SetTextureAlphaMod(tex, 255);
 }
 
-void Enemy::update(float deltaTime, Player* player) {
+void Enemy::update(float deltaTime, Player* player)
+{
+    // ❶ Всегда двигаем кадры раньше любых return
+    animationTimer += deltaTime;
+    if (animationTimer >= 0.15f) {
+        animationTimer = 0.0f;
+        currentFrame = (currentFrame + 1) % totalFrames;
+    }
+
+    // --- смерть -----------------------------------------------------------
     if (state == EnemyState::Dead) {
         deathTimer += deltaTime;
         deathAlpha -= (255.0f / deathDuration) * deltaTime;
@@ -136,6 +154,32 @@ void Enemy::update(float deltaTime, Player* player) {
         if (deathTimer >= deathDuration) markedForDeletion = true;
         return;
     }
+
+    // --- получение урона --------------------------------------------------
+    if (isHurt) {
+        hurtTimer += deltaTime;
+        if (hurtTimer >= hurtDuration) {
+            isHurt = false;
+            setAnimation("idle");
+        }
+        return;
+    }
+
+    // --- атака ------------------------------------------------------------
+    if (isAttacking) {
+        attackAnimTimer += deltaTime;
+        if (!hasDealtDamageInThisAttack && currentFrame == 3) {
+            player->takeDamage(12 + rand() % 4);
+            hasDealtDamageInThisAttack = true;
+        }
+        if (attackAnimTimer >= attackAnimDuration) {
+            isAttacking = false;
+            setAnimation("idle");
+        }
+        return;
+    }
+
+
 
     timeSinceLastAttack += deltaTime;
 
@@ -152,111 +196,49 @@ void Enemy::update(float deltaTime, Player* player) {
         }
     }
 
-    switch (type) {
-    case EnemyType::Boar:
-        if (distance < boarAggroRadius) {
-            setAnimation("boar-walk");
-            boarChargeTimer += deltaTime;
-            if (boarChargeTimer > chargeDelay && timeSinceLastAttack >= attackCooldown) {
-                setAnimation("boar-attack");
-                player->takeDamage(20);
-                timeSinceLastAttack = 0.0f;
-            }
+    if (state == EnemyState::Idle && distance < aggroRadius) {
+        suspicionTimer += deltaTime;
+        state = (suspicionTimer > suspicionThreshold) ? EnemyState::Aggro : EnemyState::Suspicious;
+    }
+    else if (state == EnemyState::Suspicious) {
+        if (distance < aggroRadius) {
+            suspicionTimer += deltaTime;
+            if (suspicionTimer >= suspicionThreshold) state = EnemyState::Aggro;
         }
         else {
-            setAnimation("boar-stand");
-            boarChargeTimer = 0.0f;
+            suspicionTimer = 0;
+            state = EnemyState::Idle;
         }
-        break;
+    }
+    else if (state == EnemyState::Aggro) {
+        if (distance < 50.0f && timeSinceLastAttack >= attackCooldown) {
+            setAnimation("attack");
+            isAttacking = true;
+            attackAnimTimer = 0.0f;
+            hasDealtDamageInThisAttack = false; // сбросить урон
+            timeSinceLastAttack = 0.0f;
+        }
 
-    case EnemyType::Fox:
-        movementTimer += deltaTime;
-        if (movementTimer > movementDelay) {
-            patrolDirection *= -1.0f;
-            movementTimer = 0.0f;
-        }
-        rect.x += patrolDirection * speed * deltaTime;
-        for (const auto& wall : collisionRects) {
-            if (SDL_HasRectIntersectionFloat(&rect, &wall)) {
-                rect.x -= patrolDirection * speed * deltaTime;
-                patrolDirection *= -1.0f;
-                break;
-            }
-        }
-        facingRight = patrolDirection >= 0;
-        setAnimation("fox");
-        break;
 
-    case EnemyType::Goat:
-        movementTimer += deltaTime;
-        if (movementTimer > movementDelay) {
-            patrolDirection *= -1.0f;
-            movementTimer = 0.0f;
-        }
-        rect.x += patrolDirection * speed * deltaTime;
-        for (const auto& wall : collisionRects) {
-            if (SDL_HasRectIntersectionFloat(&rect, &wall)) {
-                rect.x -= patrolDirection * speed * deltaTime;
-                break;
-            }
-        }
-        facingRight = patrolDirection >= 0;
-        setAnimation("goat_walk");
-        break;
-
-    case EnemyType::Bird:
-        movementTimer += deltaTime;
-        if (movementTimer > movementDelay) {
-            float dir = (rand() % 2 == 0) ? 1.0f : -1.0f;
-            rect.x += dir * speed * deltaTime;
-            facingRight = dir >= 0;
-            movementTimer = 0.0f;
-        }
-        setAnimation("bird_blue");
-        break;
-
-    default:
-        if (state == EnemyState::Idle && distance < aggroRadius) {
-            suspicionTimer += deltaTime;
-            state = (suspicionTimer > suspicionThreshold) ? EnemyState::Aggro : EnemyState::Suspicious;
-        }
-        else if (state == EnemyState::Suspicious) {
-            if (distance < aggroRadius) {
-                suspicionTimer += deltaTime;
-                if (suspicionTimer >= suspicionThreshold) state = EnemyState::Aggro;
-            }
-            else {
-                suspicionTimer = 0;
-                state = EnemyState::Idle;
-            }
-        }
-        else if (state == EnemyState::Aggro) {
-            if (distance < 50.0f && timeSinceLastAttack >= attackCooldown) {
-                setAnimation("attack");
-                player->takeDamage(12 + rand() % 4);
-                timeSinceLastAttack = 0.0f;
-            }
-            else {
-                setAnimation("walk");
-                rect.x += (dx / distance) * speed * deltaTime;
-                facingRight = dx >= 0;
-            }
-            if (distance > aggroRadius * 1.5f)
-                state = EnemyState::Returning;
-        }
-        else if (state == EnemyState::Returning) {
+        else {
             setAnimation("walk");
-            float back = spawnPoint.x - rect.x;
-            if (fabsf(back) > 5.0f) {
-                rect.x += (back / fabsf(back)) * speed * deltaTime;
-                facingRight = back >= 0;
-            }
-            else {
-                rect.x = spawnPoint.x;
-                state = EnemyState::Idle;
-            }
+            rect.x += (dx / distance) * speed * deltaTime;
+            facingRight = dx >= 0;
         }
-        break;
+        if (distance > aggroRadius * 1.5f)
+            state = EnemyState::Returning;
+    }
+    else if (state == EnemyState::Returning) {
+        setAnimation("walk");
+        float back = spawnPoint.x - rect.x;
+        if (fabsf(back) > 5.0f) {
+            rect.x += (back / fabsf(back)) * speed * deltaTime;
+            facingRight = back >= 0;
+        }
+        else {
+            rect.x = spawnPoint.x;
+            state = EnemyState::Idle;
+        }
     }
 
     velocityY += gravity;

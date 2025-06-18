@@ -62,12 +62,19 @@ void TileMap::renderLayer(SDL_Renderer* renderer, Camera* camera, const std::str
                 if (!ts || !ts->texture) continue;
 
                 SDL_FRect src = {
-                    float((tileID - ts->firstgid) % ts->columns * 32),
-                    float((tileID - ts->firstgid) / ts->columns * 32),
-                    32.0f, 32.0f
+    float((tileID - ts->firstgid) % ts->columns * tileWidth),
+    float((tileID - ts->firstgid) / ts->columns * tileHeight),
+    float(tileWidth),
+    float(tileHeight)
                 };
 
-                SDL_FRect worldDest = { float(x * 32), float(y * 32), 32.0f, 32.0f };
+                SDL_FRect worldDest = {
+                    float(x * tileWidth),
+                    float(y * tileHeight),
+                    float(tileWidth),
+                    float(tileHeight)
+                };
+
                 SDL_FRect screenDest = camera->apply(worldDest);
 
                 SDL_RenderTexture(renderer, ts->texture, &src, &screenDest);

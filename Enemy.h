@@ -8,7 +8,7 @@
 #include "Camera.h"
 #include "Player.h"
 
-enum class EnemyType { Default, Boar, Fox, Goat, Bird };
+enum class EnemyType { Default };
 
 class Enemy {
 public:
@@ -34,7 +34,7 @@ private:
 
     bool markedForDeletion = false;
 
-    enum class EnemyState { Idle, Suspicious, Aggro, Returning, Hurt, Dead };
+    enum class EnemyState { Idle, Suspicious, Aggro, Returning, Dead };
     EnemyState state = EnemyState::Idle;
 
     EnemyType type = EnemyType::Default;
@@ -47,12 +47,7 @@ private:
 
     std::unordered_map<std::string, SDL_Texture*> textures;
     std::unordered_map<std::string, int> frameCounts = {
-        {"idle", 4}, {"walk", 6}, {"attack", 6}, {"hurt", 2}, {"death", 6},
-        {"boar-walk", 4}, {"boar-stand", 4}, {"boar-attack", 6}, {"boar-die", 4},
-        {"slime-walk", 3}, {"deer-run", 3}, {"ovca-walk", 4}, {"ovca-eat", 4},
-        {"polar-bear", 3}, {"fox", 3}, {"black-bear", 3}, {"bird_spparow", 3},
-        {"bird_white", 3}, {"bird_eagle", 3}, {"bird_brown", 3}, {"bird_blue", 3},
-        {"bear", 3}, {"bat", 4}, {"goat_walk", 4}, {"goat_eat", 4}
+        {"idle", 4}, {"walk", 6}, {"attack", 6}, {"hurt", 2}, {"death", 6}
     };
 
     int currentFrame = 0;
@@ -66,20 +61,12 @@ private:
     float suspicionTimer = 0.0f;
     float suspicionThreshold = 0.5f;
 
-    float boarAggroRadius = 200.0f;
-    float boarChargeTimer = 0.0f;
-    float chargeDelay = 0.6f;
-
-    float movementTimer = 0.0f;
-    float movementDelay = 2.0f;
-
     bool facingRight = true;
     bool isDead = false;
     std::string currentAnim = "idle";
 
     int health;
     int maxHealth;
-    Uint64 hitStartTime = 0;
 
     float attackCooldown = 1.0f;
     float timeSinceLastAttack = 0.0f;
@@ -90,13 +77,17 @@ private:
 
     float deathTimer = 0.0f;
     float deathDuration = 1.5f;
+    bool hasDealtDamageInThisAttack = false;
 
-    bool isFlashingRed = false;
-    Uint64 flashStartTime = 0;
-    Uint64 flashDuration = 200;
+    bool isHurt = false;
+    float hurtTimer = 0.0f;
+    float hurtDuration = 0.5f;
+
+    bool isAttacking = false;
+    float attackAnimTimer = 0.0f;
+    float attackAnimDuration = 0.6f;
 
     static std::vector<Enemy*> allEnemies;
 
-    float patrolDirection = 1.0f;
     float deathAlpha = 255.0f;
 };

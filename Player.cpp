@@ -390,6 +390,24 @@ void Player::setPosition(float x, float y) {
             }
             rect = dest;  // чтобы getRect() возвращал актуальные координаты
 
+            Uint64 nowMs = SDL_GetTicks();
+
+            // Если прошло 7 секунд без урона — разрешить регенерацию
+            if (!canRegen && nowMs - lastDamageTime >= 7000) {
+                canRegen = true;
+                lastHealTick = nowMs; // сбрасываем таймер лечения
+            }
+
+            // Если регенерация включена и прошло 5 секунд с прошлого восстановления
+            if (canRegen && nowMs - lastHealTick >= 5000) {
+                if (currentHealth < TotalHealth) {
+                    currentHealth += 5;
+                    if (currentHealth > TotalHealth) currentHealth = TotalHealth;
+                    interface->setHealth(currentHealth);
+                }
+                lastHealTick = nowMs; // обновляем таймер
+            }
+
         }
 
         void Player::takeDamage(int amount) {
@@ -397,7 +415,11 @@ void Player::setPosition(float x, float y) {
             currentHealth -= amount;
             interface->setHealth(currentHealth);
             if (currentHealth < 0) currentHealth = 0;
+
+            lastDamageTime = SDL_GetTicks(); // <<< Запоминаем время урона
+            canRegen = false;                // <<< Останавливаем реген
         }
+
 
         void Player::setDest(const SDL_FRect& d)
         {
