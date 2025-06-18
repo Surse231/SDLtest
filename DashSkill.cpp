@@ -26,12 +26,21 @@ void DashSkill::update(Player* player, float deltaTime) {
     float dx = static_cast<float>(direction) * dashSpeed * deltaTime;
 
     SDL_FRect dest = player->getDest();
-    dest.x += dx;
-    player->setDest(dest); // новый метод, просто устанавливает dest без сдвига по y
+    SDL_FRect nextPos = dest;
+    nextPos.x += dx;
 
+    // Проверяем коллизию с новым положением
+    if (!player->checkCollisionForRect(nextPos)) {
+        player->setDest(nextPos); // безопасное перемещение
+    }
+    else {
+        // При столкновении прерываем рывок
+        isDashing = false;
+    }
 
-    if (dashTime >= (dashDuration / 1000.0f)) {  // тоже нужно перевести в секунды
+    if (dashTime >= (dashDuration / 1000.0f)) {
         isDashing = false;
     }
 }
+
 

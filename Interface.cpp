@@ -21,10 +21,11 @@ void Interface::setMoney(int money) {
     playerMoneyHUD->setMoney(money);
 }
 
-void Interface::obnovlenieHUD() {
+void Interface::obnovlenieHUD(float deltaTime) {
     playerMoneyHUD->obnovlenieHUD();
-    playerHealthHUD->obnovlenieHUD();
+    playerHealthHUD->obnovlenieHUD(deltaTime);
 }
+
 
 void Interface::otrisovka() const {
     playerMoneyHUD->otrisovka();

@@ -143,6 +143,7 @@
   <ItemGroup>
     <ClCompile Include="Animation.cpp" />
     <ClCompile Include="Camera.cpp" />
+    <ClCompile Include="Chest.cpp" />
     <ClCompile Include="DashSkill.cpp" />
     <ClCompile Include="Enemy.cpp" />
     <ClCompile Include="FireballSkill.cpp" />
@@ -162,12 +163,14 @@
   <ItemGroup>
     <ClInclude Include="Animation.h" />
     <ClInclude Include="Camera.h" />
+    <ClInclude Include="Chest.h" />
     <ClInclude Include="DashSkill.h" />
     <ClInclude Include="Enemy.h" />
     <ClInclude Include="FireballSkill.h" />
     <ClInclude Include="Game.h" />
     <ClInclude Include="Interface.h" />
     <ClInclude Include="Inventory.h" />
+    <ClInclude Include="Item.h" />
     <ClInclude Include="MainMenu.h" />
     <ClInclude Include="Player.h" />
     <ClInclude Include="PlayerHealthHUD.h" />

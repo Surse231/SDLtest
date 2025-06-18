@@ -9,13 +9,11 @@ public:
     FireballSkill();
 
     void activate(Player* player) override;
-    void update(Player* player, float deltaTime) override; // для интерфейса
-    void update(Player* player, float deltaTime, float mapWidth); // дополнительная версия
+    void update(Player* player, float deltaTime) override;
     void render(SDL_Renderer* renderer, Camera* camera) override;
 
     SDL_FRect getRect() const { return fireballRect; }
     bool isActive() const { return active; }
-
     void deactivate() { active = false; }
 
 private:
@@ -27,7 +25,6 @@ private:
     static constexpr float WIDTH = 20.0f;
     static constexpr float HEIGHT = 20.0f;
 
-    float traveledDistance = 0.0f;
-    float maxDistance = 500.0f; // например, 500 пикселей
-
+    float traveledDistance;
+    float maxDistance;
 };

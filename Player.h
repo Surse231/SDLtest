@@ -23,7 +23,7 @@ public:
     void obrabotkaklavish(SDL_Event* event);
     void obnovleniepersa();
     void otrisovka();
-
+    bool checkCollisionForRect(const SDL_FRect& rect) const;
     void setPosition(float x, float y);
     void setCollisions(const std::vector<SDL_FRect>& rects);
 
@@ -33,7 +33,8 @@ public:
 
     bool getIsSkillActive() const { return isSkillActive; }
     bool isFlipped() const { return flip == SDL_FLIP_HORIZONTAL; }
-    bool checkCollision(const SDL_FRect& a, const SDL_FRect& b);
+    bool checkCollision(const SDL_FRect& a, const SDL_FRect& b) const;
+
 
     void setSkillActive(bool active);
     void setLastDashTime(Uint64 t);
@@ -107,12 +108,11 @@ private:
     int TotalHealth;
     int money = 0;
 
-    SDL_FRect hitbox{};
     float oldX = 0.0f;
     bool isOnGround = false;
     float velocityY = 0.0f;
     float gravity = 1.0f;
-    float sila_prizhka = -15.0f;
+    float sila_prizhka = -10.0f;
 
     bool currentLoop = true;
     bool isWalk = false;
@@ -121,6 +121,7 @@ private:
     bool isRunning = false;
     bool damageDone = false;
     bool hasDealtDamage = false;
+    SDL_FRect hitbox;
 
     bool isSkillActive = false;
 

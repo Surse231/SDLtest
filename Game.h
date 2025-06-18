@@ -27,7 +27,7 @@ private:
     SDL_Window* window = nullptr;
     SDL_Renderer* renderer = nullptr;
     Player* player = nullptr;
-    TTF_Font* font = nullptr;
+    TTF_Font* font;
     MainMenu* menu = nullptr;
     Camera* camera = nullptr;
 

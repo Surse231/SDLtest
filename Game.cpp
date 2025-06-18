@@ -14,20 +14,37 @@ bool checkCollision(const SDL_FRect& a, const SDL_FRect& b) {
 }
 
 
-Game::Game() {}
+Game::Game() : font(nullptr), window(nullptr), renderer(nullptr), camera(nullptr), player(nullptr), menu(nullptr)
+{
+    // остальные инициализации, если нужны
+}
+
 
 Game::~Game()
 {
-    delete player;
-    delete menu;
-    delete camera;
+    // Очистка ресурсов игры
 
-    if (font) TTF_CloseFont(font);
-    SDL_DestroyRenderer(renderer);
-    SDL_DestroyWindow(window);
+    if (font) {
+        TTF_CloseFont(font);
+        font = nullptr;
+    }
+
+    // Уничтожение окна и рендерера
+    if (renderer) {
+        SDL_DestroyRenderer(renderer);
+        renderer = nullptr;
+    }
+    if (window) {
+        SDL_DestroyWindow(window);
+        window = nullptr;
+    }
+
     TTF_Quit();
     SDL_Quit();
 }
+
+
+
 
 SDL_AppResult Game::SDL_AppInit()
 {
@@ -71,6 +88,9 @@ SDL_AppResult Game::SDL_AppInit()
 
     player->setCollisions(tileMap->getCollisionRects());
     player->setPosition(tileMap->getSpawnPoint().x, tileMap->getSpawnPoint().y);
+
+    SDL_FPoint spawn = tileMap->getSpawnPoint();
+    player->setPosition(spawn.x, spawn.y);
 
     menu = new MainMenu(renderer, font, window);  // 🔧 добавлено
 
@@ -126,12 +146,12 @@ SDL_AppResult Game::SDL_AppIterate()
     SDL_RenderClear(renderer);
 
 
-    tileMap->renderLayer(renderer, camera->getView(), u8"Tile Layer 1");
-    tileMap->renderLayer(renderer, camera->getView(), u8"Tile Layer 2");
-    tileMap->renderLayer(renderer, camera->getView(), u8"Tile Layer 3");
-    tileMap->renderLayer(renderer, camera->getView(), u8"Tile Layer 4");
-    tileMap->renderLayer(renderer, camera->getView(), u8"Tile Layer 5");
-    tileMap->renderLayer(renderer, camera->getView(), u8"Tile Layer 6");
+    tileMap->renderLayer(renderer, camera, "Tile Layer 1");
+    tileMap->renderLayer(renderer, camera, "Tile Layer 2");
+    tileMap->renderLayer(renderer, camera, "Tile Layer 3");
+    tileMap->renderLayer(renderer, camera, "Tile Layer 4");
+    tileMap->renderLayer(renderer, camera, "Tile Layer 5");
+    tileMap->renderLayer(renderer, camera, "Tile Layer 6");
 
     if (player->isDead()) {
         SDL_Color red = { 255, 0, 0, 255 };
@@ -184,7 +204,12 @@ SDL_AppResult Game::SDL_AppIterate()
         menu->render();
     }
     else {
+        const bool* keys = SDL_GetKeyboardState(nullptr);
         camera->update(player->getDest(), tileMap->getMapWidth(), tileMap->getMapHeight());
+        if (keys[SDL_SCANCODE_EQUALS]) camera->zoom += 0.01f;
+        if (keys[SDL_SCANCODE_MINUS]) camera->zoom -= 0.01f;
+        if (camera->zoom < 0.5f) camera->zoom = 0.5f;
+        if (camera->zoom > 4.0f) camera->zoom = 4.0f;
 
 
         player->otrisovka();
@@ -253,7 +278,7 @@ void Game::SDL_AppQuit(SDL_AppResult result)
     // Всё удаляется в деструкторе
     for (Enemy* enemy : enemies) {
         delete enemy;
-    }
+    }   
     enemies.clear();
 
 }

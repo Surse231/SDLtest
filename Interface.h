@@ -10,7 +10,7 @@ public:
     Interface(SDL_Renderer* renderer, TTF_Font* font, int currentHealth, int TotalHealth);
     ~Interface();
 
-    void obnovlenieHUD();
+    void obnovlenieHUD(float deltaTime);
     void otrisovka() const;
 
     void setMoney(int newMoney);

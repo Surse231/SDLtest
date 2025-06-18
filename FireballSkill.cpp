@@ -3,8 +3,10 @@
 FireballSkill::FireballSkill()
     : active(false),
     fireballRect{ 0, 0, WIDTH, HEIGHT },
-    fireballSpeed(600.0f), // скорость пикселей в секунду
-    fireballDirection(1.0f)
+    fireballSpeed(600.0f),
+    fireballDirection(1.0f),
+    traveledDistance(0.0f),
+    maxDistance(500.0f)
 {
 }
 
@@ -19,34 +21,33 @@ void FireballSkill::activate(Player* player) {
     fireballRect = { fireballX, fireballY, WIDTH, HEIGHT };
     fireballDirection = player->isFlipped() ? -1.0f : 1.0f;
 
-    traveledDistance = 0.0f; // 🔥 сбрасываем
+    traveledDistance = 0.0f;
     active = true;
 }
 
-
-void FireballSkill::update(Player* player, float deltaTime)
-{
-    update(player, deltaTime, 5000.0f); // или возьми real mapWidth из player
-}
-
-void FireballSkill::update(Player* player, float deltaTime, float mapWidth)
-{
+void FireballSkill::update(Player* player, float deltaTime) {
     if (!active) return;
 
     float dx = fireballSpeed * fireballDirection * deltaTime;
-    fireballRect.x += dx;
 
-    traveledDistance += std::abs(dx);  // 🔥 суммируем дистанцию
+    // Позиция после перемещения
+    SDL_FRect nextPos = fireballRect;
+    nextPos.x += dx;
 
-    // Прекращаем, если пролетели слишком много
-    if (traveledDistance >= maxDistance || fireballRect.x < 0 || fireballRect.x > mapWidth) {
+    // Проверка коллизии через player
+    if (!player->checkCollisionForRect(nextPos)) {
+        fireballRect = nextPos;
+        traveledDistance += std::abs(dx);
+
+        if (traveledDistance >= maxDistance) {
+            active = false;
+        }
+    }
+    else {
+        // Если столкнулся — отключаем
         active = false;
     }
 }
-
-
-
-
 
 void FireballSkill::render(SDL_Renderer* renderer, Camera* camera) {
     if (!active) return;

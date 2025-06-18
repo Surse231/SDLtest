@@ -53,10 +53,10 @@
                 5
             ],
             "scale": 1.5,
-            "selectedLayer": 7,
+            "selectedLayer": 6,
             "viewCenter": {
-                "x": 415.33333333333326,
-                "y": 1134.3333333333333
+                "x": 505.3333333333333,
+                "y": 1329
             }
         },
         "Map2.json": {
@@ -66,8 +66,8 @@
             "scale": 0.75,
             "selectedLayer": 5,
             "viewCenter": {
-                "x": 510.6666666666666,
-                "y": 1166
+                "x": 3746.6666666666665,
+                "y": 800.6666666666666
             }
         },
         "Medieval_props_free.tsx": {
@@ -187,6 +187,7 @@
         "Map2.json"
     ],
     "project": "MEGATEST.tiled-project",
+    "property.type": "bool",
     "recentFiles": [
         "Map2.json",
         "MEGATEST.tmx",
