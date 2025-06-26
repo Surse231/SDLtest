@@ -16,9 +16,9 @@ private:
     void obnovlenieText();
     int money;
     std::string Text;
-    SDL_Color TextColor = { 255, 255, 255, 255 };  
-    SDL_Renderer* renderer;  
-    TTF_Font* font;  
-    SDL_FRect dest; 
-    SDL_Texture* Texture;  
+    SDL_Color TextColor = { 255, 255, 255, 255 };
+    SDL_Renderer* renderer;
+    TTF_Font* font;
+    SDL_FRect dest;
+    SDL_Texture* Texture;
 };

@@ -3,19 +3,20 @@
 #include <SDL3/SDL_events.h>
 #include <SDL3/SDL.h>
 #include <SDL3/SDL_keyboard.h>
-#include "DashSkill.h"
+#include "DashSkill.h"      
 #include "FireballSkill.h"
 #include "Enemy.h"
 #include <iostream>
 #include <fstream>
 #include "Game.h"
+#include "TileMap.h"
+#include "Player.h"
 
-
-Player::Player(SDL_Renderer* renderer, TTF_Font* font, Camera* camera)
-    : renderer(renderer), font(font), camera(camera),
+Player::Player(SDL_Renderer * renderer, TTF_Font * font, Camera * camera, Game * game)
+    : renderer(renderer), font(font), camera(camera), game(game),
     inventoryOpen(false), inventory(new Inventory(renderer)),
     dashIconTexture(nullptr), animationHandler(),
-    speed(4), currentHealth(100), TotalHealth(100),
+    speed(10), currentHealth(100), TotalHealth(100),
     money(0), flip(SDL_FLIP_NONE),
     oldX(0), velocityY(0), gravity(1.0f), sila_prizhka(-15.0f),
     currentLoop(true), isWalk(false), isAttack(false),
@@ -33,17 +34,10 @@ Player::Player(SDL_Renderer* renderer, TTF_Font* font, Camera* camera)
     inventory->addItem("Topor", "assets/MoiInventory/Topor.png");
     inventory->addItem("eda", "assets/MoiInventory/eda.png");
 
-    dashIconTexture = IMG_LoadTexture(renderer, "assets/icons/dash.png");
-    if (dashIconTexture) {
-        skillHUD->addSkillIcon(dashIconTexture, "Dash");
-        skills.push_back(new DashSkill());
-    }
 
-    SDL_Texture* fireIcon = IMG_LoadTexture(renderer, "assets/icons/fireball.png");
-    if (fireIcon) {
-        skillHUD->addSkillIcon(fireIcon, "Fireball");
-        skills.push_back(new FireballSkill());
-    }
+    skills.push_back(new DashSkill());
+    skills.push_back(new FireballSkill());
+
 }
 
 Player::~Player() {
@@ -52,6 +46,7 @@ Player::~Player() {
     for (auto s : skills) delete s;
     delete inventory;
     if (dashIconTexture) SDL_DestroyTexture(dashIconTexture);
+
 }
 
 void Player::initAnimations() {
@@ -108,6 +103,12 @@ void Player::otrisovka() {
     SDL_SetRenderDrawColor(renderer, 255, 0, 0, 120);
     SDL_FRect screenHitbox = camera->apply(hitbox);
     SDL_RenderRect(renderer, &screenHitbox);
+
+    SDL_FRect attackBox = getAttackHitbox();
+    SDL_FRect screenAtkBox = camera->apply(attackBox);
+
+    //SDL_SetRenderDrawColor(renderer, 255, 165, 0, 180); // оранжевый полупрозрачный
+    //SDL_RenderRect(renderer, &screenAtkBox);
 }
 
 
@@ -159,7 +160,6 @@ SDL_FRect Player::getRect() const {
 
 void Player::addMoney(int addedMoney) {
     money += addedMoney;
-    interface->setMoney(money);
 }
 
 void Player::updateHitbox() {
@@ -187,13 +187,16 @@ void Player::defineLook(const bool* keys) {
     }
 }
 
+SDL_FRect Player::getHitbox() const {
+    return hitbox;
+}
 
 
 void Player::attackHandler() {
     if (!isAttack) return;
 
     int currentFrame = animationHandler.getCurrentFrame();
-    std::cout << "Enemies count in Player: " << enemies.size() << std::endl;
+
 
     if (currentFrame >= 4 && !hasDealtDamage) {
         SDL_FRect atkBox = getAttackHitbox();
@@ -211,7 +214,7 @@ void Player::attackHandler() {
 
     if (animationHandler.isFinished()) {
         isAttack = false;
-        hasDealtDamage = false; 
+        hasDealtDamage = false;
         currentAnim = "idle";
         animationHandler.reset();
     }
@@ -330,161 +333,169 @@ void Player::setPosition(float x, float y) {
 }
 
 
-        void Player::setCollisions(const std::vector<SDL_FRect>& rects) {
-            collisionRects = rects;
-        }
+void Player::setCollisions(const std::vector<SDL_FRect>& rects) {
+    collisionRects = rects;
+}
 
 
-        // Возвращает true, если игрок сейчас атакует
-        bool Player::getIsAttack() const {
-            return isAttack;
-        }
+// Возвращает true, если игрок сейчас атакует
+bool Player::getIsAttack() const {
+    return isAttack;
+}
 
-        SDL_FRect Player::getAttackHitbox() const {
-            float attackWidth = 110.0f;  // Расширяем ещё больше (с 90 → 110)
-            float attackHeight = dest.h * 1.2f; // Делаем выше (с 1.1 → 1.2)
-            float attackX;
+SDL_FRect Player::getAttackHitbox() const {
+    float attackWidth =  10.0f;  // Расширяем ещё больше (с 90 → 110)
+    float attackHeight = dest.h * 0.8f; // Делаем выше (с 1.1 → 1.2)
+    float offset = 30.0f;
+    float attackX;
 
-            if (flip == SDL_FLIP_NONE) {
-                attackX = dest.x + dest.w;
-            }
-            else {
-                attackX = dest.x - attackWidth;
-            }
+    if (flip == SDL_FLIP_NONE) {
+        attackX = dest.x + dest.w - offset;
+    }
+    else {
+        attackX = dest.x - attackWidth + offset;
+    }
 
-            float attackY = dest.y;
+    float attackY = dest.y + (dest.h - attackHeight) / 2.0f; // Центрируем по вертикали
 
-            return SDL_FRect{ attackX, attackY, attackWidth, attackHeight };
-        }
-
-
-        void Player::obnovleniepersa() {
-            static Uint64 lastTime = SDL_GetTicks();
-
-            Uint64 now = SDL_GetTicks();
-            Uint64 deltaTimeMs = now - lastTime;
-            lastTime = now;
-
-            float deltaTime = deltaTimeMs / 1000.0f;
-
-            const bool* keys = SDL_GetKeyboardState(nullptr);
-
-            // Всегда вызываем движение
-            moveHandler(keys);
-
-            interface->obnovlenieHUD(deltaTime);
+    return SDL_FRect{ attackX, attackY, attackWidth, attackHeight };
+}
 
 
-            const AnimationSet& currentAnimation = animations[currentAnim];
+void Player::obnovleniepersa() {
+    static Uint64 lastTime = SDL_GetTicks();
 
-            // loop=false для анимации атаки, чтобы она дошла до конца
-            bool loopAnim = (currentAnim != "attack");
+    Uint64 now = SDL_GetTicks();
+    Uint64 deltaTimeMs = now - lastTime;
+    lastTime = now;
 
-            animationHandler.update(currentAnimation, src, 48 /* ширина кадра для ваших спрайтов */, loopAnim);
+    float deltaTime = deltaTimeMs / 1000.0f;
+
+    const bool* keys = SDL_GetKeyboardState(nullptr);
+
+    // Всегда вызываем движение
+    moveHandler(keys);
+
+    interface->obnovlenieHUD(deltaTime);
 
 
-            attackHandler();
+    const AnimationSet& currentAnimation = animations[currentAnim];
 
-            for (Skill* skill : skills) {
-                skill->update(this, deltaTime); // FireballSkill использует checkCollisionForRect(player)
-            }
-            rect = dest;  // чтобы getRect() возвращал актуальные координаты
+    // loop=false для анимации атаки, чтобы она дошла до конца
+    bool loopAnim = (currentAnim != "attack");
 
-            Uint64 nowMs = SDL_GetTicks();
+    animationHandler.update(currentAnimation, src, 48 /* ширина кадра для ваших спрайтов */, loopAnim);
 
-            // Если прошло 7 секунд без урона — разрешить регенерацию
-            if (!canRegen && nowMs - lastDamageTime >= 7000) {
-                canRegen = true;
-                lastHealTick = nowMs; // сбрасываем таймер лечения
-            }
 
-            // Если регенерация включена и прошло 5 секунд с прошлого восстановления
-            if (canRegen && nowMs - lastHealTick >= 5000) {
-                if (currentHealth < TotalHealth) {
-                    currentHealth += 5;
-                    if (currentHealth > TotalHealth) currentHealth = TotalHealth;
-                    interface->setHealth(currentHealth);
-                }
-                lastHealTick = nowMs; // обновляем таймер
-            }
+    attackHandler();
 
-        }
+    for (Skill* skill : skills) {
+        skill->update(this, deltaTime); // FireballSkill использует checkCollisionForRect(player)
+    }
+    rect = dest;  // чтобы getRect() возвращал актуальные координаты
 
-        void Player::takeDamage(int amount) {
-            if (currentHealth <= 0) return;
-            currentHealth -= amount;
+    Uint64 nowMs = SDL_GetTicks();
+
+    // Если прошло 7 секунд без урона — разрешить регенерацию
+    if (!canRegen && nowMs - lastDamageTime >= 7000) {
+        canRegen = true;
+        lastHealTick = nowMs; // сбрасываем таймер лечения
+    }
+
+    // Если регенерация включена и прошло 5 секунд с прошлого восстановления
+    if (canRegen && nowMs - lastHealTick >= 5000) {
+        if (currentHealth < TotalHealth) {
+            currentHealth += 5;
+            if (currentHealth > TotalHealth) currentHealth = TotalHealth;
             interface->setHealth(currentHealth);
-            if (currentHealth < 0) currentHealth = 0;
-
-            lastDamageTime = SDL_GetTicks(); // <<< Запоминаем время урона
-            canRegen = false;                // <<< Останавливаем реген
         }
-
-
-        void Player::setDest(const SDL_FRect& d)
-        {
-            dest = d;
-            updateHitbox();
+        lastHealTick = nowMs; // обновляем таймер   
+    }
+    // сохраняем последний портал, в который зашёл игрок
+    game->lastPortalInRange = nullptr;
+    for (const Portal& p : game->getTileMap()->getPortals()) {
+        SDL_FRect playerBox = getRect();
+        if (SDL_HasRectIntersectionFloat(&playerBox, &p.rect)) {
+            game->lastPortalInRange = &p;
+            break;
         }
+    }
+
+}
+
+void Player::takeDamage(int amount) {
+    if (currentHealth <= 0) return;
+    currentHealth -= amount;
+    interface->setHealth(currentHealth);
+    if (currentHealth < 0) currentHealth = 0;
+
+    lastDamageTime = SDL_GetTicks(); // <<< Запоминаем время урона
+    canRegen = false;                // <<< Останавливаем реген
+}
+
+
+void Player::setDest(const SDL_FRect& d)
+{
+    dest = d;
+    updateHitbox();
+}
 
 
 
 
-        void Player::setSkillActive(bool active) {
-            isSkillActive = active;
+void Player::setSkillActive(bool active) {
+    isSkillActive = active;
+}
+
+void Player::setLastDashTime(Uint64 t) {
+    lastDashTime = t;
+}
+
+Uint64 Player::getLastDashTime() const {
+    return lastDashTime;
+}
+
+void Player::obrabotkaklavish(SDL_Event* event) {
+    // --- ЛКМ для атаки (если инвентарь закрыт)
+    if (event->type == SDL_EVENT_MOUSE_BUTTON_DOWN && event->button.button == SDL_BUTTON_LEFT) {
+        if (!inventoryOpen && !isAttack) {
+            currentAnim = "attack";
+            animationHandler.reset();
+            isAttack = true;
+            hasDealtDamage = false; // <<< ВАЖНО!
         }
+    }
 
-        void Player::setLastDashTime(Uint64 t) {
-            lastDashTime = t;
+    // --- Не сбрасывай isAttack на MouseButtonUp!
+    // Атака завершится в attackHandler() когда animationHandler.isFinished()
+
+    // --- Инвентарь (клавиша I)
+    if (event->type == SDL_EVENT_KEY_DOWN && event->key.key == SDLK_I) {
+        if (!inventoryTogglePressed) {
+            inventoryOpen = !inventoryOpen;
+            inventoryTogglePressed = true;
+            std::cout << " Inventory status: " << (inventoryOpen ? "OPEN" : "CLOSED") << std::endl;
         }
+    }
 
-        Uint64 Player::getLastDashTime() const {
-            return lastDashTime;
+    if (event->type == SDL_EVENT_KEY_UP && event->key.key == SDLK_I) {
+        inventoryTogglePressed = false;
+    }
+
+    // --- Навыки Q / E
+    if (event->type == SDL_EVENT_KEY_DOWN && event->key.key == SDLK_Q) {
+        if (!skills.empty()) {
+            skills[0]->activate(this);  // DashSkill
         }
-
-        void Player::obrabotkaklavish(SDL_Event* event) {
-            // --- ЛКМ для атаки (если инвентарь закрыт)
-            if (event->type == SDL_EVENT_MOUSE_BUTTON_DOWN && event->button.button == SDL_BUTTON_LEFT) {
-                if (!inventoryOpen && !isAttack) {
-                    currentAnim = "attack";
-                    animationHandler.reset();
-                    isAttack = true;
-                    hasDealtDamage = false; // <<< ВАЖНО!
-                }
-            }
-
-            // --- Не сбрасывай isAttack на MouseButtonUp!
-            // Атака завершится в attackHandler() когда animationHandler.isFinished()
-
-            // --- Инвентарь (клавиша I)
-            if (event->type == SDL_EVENT_KEY_DOWN && event->key.key == SDLK_I) {
-                if (!inventoryTogglePressed) {
-                    inventoryOpen = !inventoryOpen;
-                    inventoryTogglePressed = true;
-                    std::cout << " Inventory status: " << (inventoryOpen ? "OPEN" : "CLOSED") << std::endl;
-                }
-            }
-
-            if (event->type == SDL_EVENT_KEY_UP && event->key.key == SDLK_I) {
-                inventoryTogglePressed = false;
-            }
-
-            // --- Навыки Q / E
-            if (event->type == SDL_EVENT_KEY_DOWN && event->key.key == SDLK_Q) {
-                if (!skills.empty()) {
-                    skills[0]->activate(this);  // DashSkill
-                }
-            }
-            if (event->type == SDL_EVENT_KEY_DOWN && event->key.key == SDLK_1) {
-                if (skills.size() > 1) {
-                    skills[1]->activate(this);  // FireballSkill
-                }
-            }
-
-            // --- События для инвентаря
-            if (inventoryOpen) {
-                inventory->handleEvent(event);
-            }
+    }
+    if (event->type == SDL_EVENT_KEY_DOWN && event->key.key == SDLK_1) {
+        if (skills.size() > 1) {
+            skills[1]->activate(this);  // FireballSkill
         }
+    }
 
-
+    // --- События для инвентаря
+    if (inventoryOpen) {
+        inventory->handleEvent(event);
+    }
+}

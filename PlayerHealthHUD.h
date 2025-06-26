@@ -1,4 +1,4 @@
-#pragma once
+п»ї#pragma once
 #include <string>
 #include <SDL3/SDL.h>
 #include <SDL3_ttf/SDL_ttf.h>
@@ -26,7 +26,7 @@ private:
     SDL_Rect destHealthBar;
     SDL_Rect destBorderHealthBar;
     SDL_Rect destTotalHealthBar;
-    SDL_FRect destText; // Было SDL_Rect
+    SDL_FRect destText; // ГЃГ»Г«Г® SDL_Rect
     SDL_Color TextColor{ 255, 255, 255, 255 };
 
     float animationSpeed = 200.0f;

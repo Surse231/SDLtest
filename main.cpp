@@ -2,7 +2,7 @@
 #include <SDL3/SDL_main.h>
 #include "Game.h"
 
-    
+
 Game game;
 
 
@@ -17,6 +17,6 @@ SDL_AppResult SDL_AppIterate(void* appstate) {
     return game.SDL_AppIterate();
 }
 void SDL_AppQuit(void* appstate, SDL_AppResult result) {
- 
+
     game.SDL_AppQuit(result);
 }

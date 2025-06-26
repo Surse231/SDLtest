@@ -1,6 +1,6 @@
 ﻿#include "MainMenu.h"
 #include <SDL3_ttf/SDL_ttf.h>
-MainMenu::MainMenu(SDL_Renderer* renderer, TTF_Font* font, SDL_Window* window)
+MainMenu::MainMenu(SDL_Renderer * renderer, TTF_Font * font, SDL_Window * window)
     : renderer(renderer), font(font), window(window)
 {
 
@@ -49,12 +49,10 @@ void MainMenu::renderButton(const SDL_FRect& rect, const std::string& text) {
     }
 }
 
-void MainMenu::handleEvent(const SDL_Event& e, bool& resume, bool& quit) {
+void MainMenu::handleEvent(const SDL_Event& e, bool& resume, bool& exitToStartMenu) {
     int w, h;
     SDL_GetWindowSize(window, &w, &h);
     float centerX = w / 2.0f - 200.f / 2.0f;
-    float x = e.button.x;
-    float y = e.button.y;
     if (e.type == SDL_EVENT_MOUSE_BUTTON_DOWN) {
         float x = e.button.x;
         float y = e.button.y;
@@ -66,7 +64,7 @@ void MainMenu::handleEvent(const SDL_Event& e, bool& resume, bool& quit) {
                 showSettings = true;
             }
             else if (x >= centerX && x <= centerX + 200.f && y >= 460.f && y <= 520.f) {
-                quit = true;
+                exitToStartMenu = true; // вместо quit = true
             }
         }
         else {
@@ -84,6 +82,3 @@ void MainMenu::handleEvent(const SDL_Event& e, bool& resume, bool& quit) {
         }
     }
 }
-
-
-

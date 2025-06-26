@@ -1,4 +1,4 @@
-#pragma once
+ï»¿#pragma once
 #include <SDL3/SDL.h>
 #include <SDL3_ttf/SDL_ttf.h>
 #include <map>
@@ -12,11 +12,13 @@
 #include "SkillHUD.h"
 #include "Inventory.h"
 
+
+class Game;
 class Enemy;
 
 class Player {
 public:
-    Player(SDL_Renderer* renderer, TTF_Font* font, Camera* camera);
+    Player(SDL_Renderer* renderer, TTF_Font* font, Camera* camera, Game* game);
     ~Player();
 
     void setEnemies(const std::vector<Enemy*>& enemiesList);
@@ -65,10 +67,12 @@ public:
 
     bool isInventoryOpen() const { return inventoryOpen; }
     Inventory* getInventory() const { return inventory; }
+    SDL_FRect getHitbox() const;
+
 
 private:
-
-    // Â private ñåêöèè
+    Game* game = nullptr;
+    // Ã‚ private Ã±Ã¥ÃªÃ¶Ã¨Ã¨
     Uint64 lastDamageTime = 0;
     Uint64 lastHealTick = 0;
     bool canRegen = false;
@@ -95,7 +99,7 @@ private:
     Interface* interface;
     Camera* camera;
 
-    float mapWidth = 50000.0f;
+    float mapWidth = 11200;
 
     SkillHUD* skillHUD;
 
@@ -132,7 +136,7 @@ private:
     bool isSkillActive = false;
 
     Uint64 lastDashTime = 0;
-    const Uint64 dashCooldown = 2000;
+    const Uint64 dashCooldown = 4000;
 
     Uint32 lastAttackTime = 0;
     const Uint32 attackCooldown = 300;

@@ -1,4 +1,4 @@
-#pragma once
+п»ї#pragma once
 #include <SDL3/SDL.h>
 #include "Structs.h"
 
@@ -19,9 +19,9 @@ public:
 private:
     int currentFrame = 0;
     int elapsedTime = 0;
-    int frameCount = 1;          // Количество кадров в текущей анимации
+    int frameCount = 1;          // ГЉГ®Г«ГЁГ·ГҐГ±ГІГўГ® ГЄГ Г¤Г°Г®Гў Гў ГІГҐГЄГіГ№ГҐГ© Г Г­ГЁГ¬Г Г¶ГЁГЁ
     Uint64 lastUpdate = 0;
     Uint32 lastFrameTime = 0;
-    Uint32 frameDuration = 100; // длительность одного кадра в мс
+    Uint32 frameDuration = 100; // Г¤Г«ГЁГІГҐГ«ГјГ­Г®Г±ГІГј Г®Г¤Г­Г®ГЈГ® ГЄГ Г¤Г°Г  Гў Г¬Г±
     int totalFrames = 0;
 };

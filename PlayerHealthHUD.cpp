@@ -3,7 +3,7 @@
 #include <SDL3/SDL.h>
 #include <SDL3_ttf/SDL_ttf.h>
 
-PlayerHealthHUD::PlayerHealthHUD(SDL_Renderer* renderer, TTF_Font* font, int health, int totalHealth)
+PlayerHealthHUD::PlayerHealthHUD(SDL_Renderer * renderer, TTF_Font * font, int health, int totalHealth)
     : renderer(renderer), font(font), Health(health), TotalHealth(totalHealth), DisplayedHealth(static_cast<float>(health)), Texture(nullptr)
 {
     destHealthBar = { 20, 20, 600, 60 };
@@ -30,7 +30,7 @@ void PlayerHealthHUD::setHealth(int newHealth) {
 
 
 void PlayerHealthHUD::update(float deltaTime) {
-    SDL_Log("update called: DisplayedHealth = %.2f, Health = %d", DisplayedHealth, Health);
+
 
     if (DisplayedHealth != Health) {
         float diff = Health - DisplayedHealth;

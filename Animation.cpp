@@ -1,16 +1,16 @@
-#include "Animation.h"
+п»ї#include "Animation.h"
 
 Animation::Animation() {}
 Animation::~Animation() {}
 
 void Animation::update(const AnimationSet& anim, SDL_FRect& src, int frameWidth, bool loop) {
-    frameCount = anim.frameCount;  // ОБЯЗАТЕЛЬНО обновлять frameCount для корректной работы
+    frameCount = anim.frameCount;  // ГЋГЃГџГ‡ГЂГ’Г…Г‹ГњГЌГЋ Г®ГЎГ­Г®ГўГ«ГїГІГј frameCount Г¤Г«Гї ГЄГ®Г°Г°ГҐГЄГІГ­Г®Г© Г°Г ГЎГ®ГІГ»
 
     Uint32 now = SDL_GetTicks();
 
     if (lastUpdate == 0) {
         lastUpdate = now;
-        return; // первый вызов — не двигаем кадры
+        return; // ГЇГҐГ°ГўГ»Г© ГўГ»Г§Г®Гў вЂ” Г­ГҐ Г¤ГўГЁГЈГ ГҐГ¬ ГЄГ Г¤Г°Г»
     }
 
     Uint64 delta = now - lastUpdate;
@@ -22,16 +22,16 @@ void Animation::update(const AnimationSet& anim, SDL_FRect& src, int frameWidth,
         currentFrame++;
         if (currentFrame >= anim.frameCount) {
             if (loop) {
-                currentFrame = 0; // сброс для цикла
+                currentFrame = 0; // Г±ГЎГ°Г®Г± Г¤Г«Гї Г¶ГЁГЄГ«Г 
             }
             else {
-                currentFrame = anim.frameCount - 1; // остановка на последнем кадре
+                currentFrame = anim.frameCount - 1; // Г®Г±ГІГ Г­Г®ГўГЄГ  Г­Г  ГЇГ®Г±Г«ГҐГ¤Г­ГҐГ¬ ГЄГ Г¤Г°ГҐ
             }
         }
     }
 
     src.x = static_cast<float>(currentFrame * frameWidth);
-    src.y = 0; // если у вас одна строка кадров, фиксируем Y на 0
+    src.y = 0; // ГҐГ±Г«ГЁ Гі ГўГ Г± Г®Г¤Г­Г  Г±ГІГ°Г®ГЄГ  ГЄГ Г¤Г°Г®Гў, ГґГЁГЄГ±ГЁГ°ГіГҐГ¬ Y Г­Г  0
 }
 
 
@@ -39,7 +39,7 @@ void Animation::reset() {
     currentFrame = 0;
     elapsedTime = 0;
     lastUpdate = 0;
-    // Лучше сброс src делать в вызывающем коде (Player)
+    // Г‹ГіГ·ГёГҐ Г±ГЎГ°Г®Г± src Г¤ГҐГ«Г ГІГј Гў ГўГ»Г§Г»ГўГ ГѕГ№ГҐГ¬ ГЄГ®Г¤ГҐ (Player)
 }
 
 bool Animation::isFinished() const {
