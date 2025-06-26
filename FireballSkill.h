@@ -27,4 +27,8 @@ private:
 
     float traveledDistance;
     float maxDistance;
+
+    // Добавь эти две переменные в private:
+    float cooldownTime;      // время КД в секундах
+    float timeSinceLastUse;  // время с последнего использования
 };

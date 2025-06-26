@@ -8,7 +8,10 @@
 #include "Camera.h"
 #include "Player.h"
 
-enum class EnemyType { Default };
+enum class EnemyType {
+    Default,
+    GraveRobber
+};
 
 class Enemy {
 public:
@@ -29,9 +32,19 @@ public:
     void setAggroState(bool state);
     bool isDeadNow() const { return isDead; }
     SDL_FRect getAttackHitbox() const;
+    // Enemy.h (добавляем публичные методы)
+    void setGroundRects(const std::vector<SDL_FRect>& rects);
+    void setObstacleRects(const std::vector<SDL_FRect>& rects);
 
 
 private:
+    SDL_FRect hitbox;
+    std::vector<SDL_FRect> groundRects;    // для земли (стопы)
+    std::vector<SDL_FRect> obstacleRects;  // д
+
+    const float maxJumpHeight = 30.0f; // например, враг может перепрыгнуть препятствие высотой до 30 пикселей
+    const float jumpVelocity = -10.0f; // скорость прыжка (отрицательная, чтобы подниматься вверх)
+
     void setAnimation(const std::string& anim);
     float attackRange = 50.0f;  // Минимальное расстояние для атаки
 

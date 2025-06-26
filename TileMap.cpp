@@ -16,17 +16,13 @@ bool TileMap::loadFromFile(const std::string& path) {
         std::cerr << "Ошибка загрузки карты: " << path << std::endl;
         return false;
     }
-    std::cout << "Файл карты загружен успешно: " << path << std::endl;
 
     json j;
     file >> j;
     mapJson = j;
 
     // Checking main map parameters
-    std::cout << "Loading map: " << path << std::endl;
-    std::cout << "Tile size: " << j["tilewidth"] << "x" << j["tileheight"] << std::endl;
-    std::cout << "Map size: " << j["width"] << "x" << j["height"] << std::endl;
-
+  
     tileWidth = j["tilewidth"];
     tileHeight = j["tileheight"];
     mapWidth = j["width"];
@@ -352,6 +348,5 @@ SDL_FPoint TileMap::getGenericSpawnPointByName(const std::string& name) const {
             }
         }
     }
-    std::cout << "⚠️ Spawn point '" << name << "' not found!\n";
     return { 0, 0 };
 }
