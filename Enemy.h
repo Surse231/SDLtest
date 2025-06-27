@@ -35,7 +35,7 @@ public:
     // Enemy.h (добавляем публичные методы)
     void setGroundRects(const std::vector<SDL_FRect>& rects);
     void setObstacleRects(const std::vector<SDL_FRect>& rects);
-
+    bool isDead = false;
 
 private:
     SDL_FRect hitbox;
@@ -78,7 +78,7 @@ private:
     float suspicionThreshold = 0.5f;
 
     bool facingRight = true;
-    bool isDead = false;
+ 
     std::string currentAnim = "idle";
 
     int health;

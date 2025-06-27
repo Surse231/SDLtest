@@ -44,6 +44,7 @@ public:
 
     int getDirection() const { return isFlipped() ? -1 : 1; }
     int getCurrentAttackFrame() const { return animationHandler.getCurrentFrame(); }
+    void updateFlip(const bool* keys);
 
     void updateInventory();
     void renderInventory();
@@ -71,6 +72,10 @@ public:
 
 
 private:
+
+    int baseDamage = 10;      // Базовый урон (начальный минимум)
+    int killCount = 0;        // Количество убитых врагов
+
     Game* game = nullptr;
     // Â private ñåêöèè
     Uint64 lastDamageTime = 0;
@@ -89,10 +94,10 @@ private:
     std::vector<SDL_FRect> collisionRects;
 
     void updateHitbox();
-    void defineLook(const bool* keys);
     void attackHandler();
     void moveHandler(const bool* keys);
     void initAnimations();
+
 
     SDL_Renderer* renderer;
     TTF_Font* font;

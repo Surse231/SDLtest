@@ -396,17 +396,21 @@ for (const auto& wall : obstacleRects) {  // используй obstacleRects в
     }
 
     else if (state == EnemyState::Returning) {
-        setAnimation("walk");
         float back = spawnPoint.x - rect.x;
+
         if (fabsf(back) > 5.0f) {
+            setAnimation("walk");
             rect.x += (back / fabsf(back)) * speed * deltaTime;
             facingRight = back >= 0;
         }
         else {
             rect.x = spawnPoint.x;
             state = EnemyState::Idle;
+            setAnimation("idle");
+            suspicionTimer = 0.0f; // сбрасываем таймер подозрения
         }
-    }
+}
+
 
     velocityY += gravity;
     rect.y += velocityY;

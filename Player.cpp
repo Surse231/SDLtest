@@ -131,13 +131,15 @@ void Player::updateHitbox() {
     hitbox = { (flip == SDL_FLIP_HORIZONTAL ? dest.x + 35 : dest.x + 15), dest.y + 24, dest.w - 50, dest.h - 25 };
 }
 
-void Player::defineLook(const bool* keys) {
-    if (isAttack) return;
+void Player::updateFlip(const bool* keys) {
     SDL_FlipMode prevFlip = flip;
     if (keys[SDL_SCANCODE_A]) flip = SDL_FLIP_HORIZONTAL;
     else if (keys[SDL_SCANCODE_D]) flip = SDL_FLIP_NONE;
-    if (prevFlip != flip) dest.x += (flip == SDL_FLIP_HORIZONTAL) ? -20 : 20;
+    if (prevFlip != flip) {
+        dest.x += (flip == SDL_FLIP_HORIZONTAL) ? -20 : 20;
+    }
 }
+
 
 SDL_FRect Player::getHitbox() const { return hitbox; }
 
@@ -147,7 +149,9 @@ void Player::attackHandler() {
         SDL_FRect atkBox = getAttackHitbox();
         for (Enemy* e : enemies) {
             if (e && checkCollision(atkBox, e->getHitbox())) {
-                e->takeDamage(10);
+                int damage = rand() % 8 + 10; // от 10 до 17
+                e->takeDamage(damage);
+
                 hasDealtDamage = true;
                 break;
             }
@@ -173,7 +177,24 @@ void Player::updateInventory() {
 void Player::moveHandler(const bool* keys) {
     isWalk = false;
     isRunning = false;
-    defineLook(keys);
+    updateFlip(keys);
+
+
+    if (isAttack) {
+        std::string prevAnim = currentAnim;
+        currentAnim = "attack";
+
+        if (prevAnim != currentAnim) {
+            animationHandler.reset();
+            src.x = src.y = 0;
+        }
+
+        animationHandler.update(animations[currentAnim], src, 48, false);
+        // УДАЛИ вот эту строку ↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓
+        // return;
+    }
+
+
 
     int actualSpeed = keys[SDL_SCANCODE_LSHIFT] ? speed * 2 : speed;
     isRunning = keys[SDL_SCANCODE_LSHIFT];
@@ -239,28 +260,31 @@ void Player::moveHandler(const bool* keys) {
     }
 
     // --- Анимации
-    if (!isAttack) {
-        std::string prevAnim = currentAnim;
+    // --- Анимации
+    std::string prevAnim = currentAnim;
 
-        if (isjump) {
-            currentAnim = "jump";
-        }
-        else if (isWalk) {
-            currentAnim = isRunning ? "run" : "walk";
-        }
-        else {
-            currentAnim = "idle";
-        }
-
-        // Только если анимация изменилась — сбрасываем и обнуляем src
-        if (prevAnim != currentAnim) {
-            animationHandler.reset();
-            src.x = 0;
-            src.y = 0;
-        }
-
-        animationHandler.update(animations[currentAnim], src, 48);
+    if (isAttack) {
+        currentAnim = "attack";
     }
+    else if (isjump) {
+        currentAnim = "jump";
+    }
+    else if (isWalk) {
+        currentAnim = isRunning ? "run" : "walk";
+    }
+    else {
+        currentAnim = "idle";
+    }
+
+    if (prevAnim != currentAnim) {
+        animationHandler.reset();
+        src.x = src.y = 0;
+    }
+
+    bool loopAnim = (currentAnim != "attack");
+    animationHandler.update(animations[currentAnim], src, 48, loopAnim);
+
+
 }
 
 
